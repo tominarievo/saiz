@@ -1,0 +1,120 @@
+{
+    "variable": [
+        {
+            "id": "baseUrl",
+            "key": "baseUrl",
+            "type": "string",
+            "name": "string",
+            "value": "http:\/\/127.0.0.1:7998"
+        }
+    ],
+    "info": {
+        "name": "SIZU",
+        "_postman_id": "fd8257f0-2965-4dba-a3f5-9a50d2141589",
+        "description": "",
+        "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
+    },
+    "item": [
+        {
+            "name": "Endpoints",
+            "description": "",
+            "item": [
+                {
+                    "name": "GET api\/user",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/user",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/user"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/shelters\/index",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/shelters\/index",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/shelters\/index"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "set-cookie",
+                                    "value": "XSRF-TOKEN=eyJpdiI6InJWcXpEV3ZJTERlVWExRVRIVWFzNkE9PSIsInZhbHVlIjoiWm9lQm1YY0VzQ1c0WjhWellaZUV4SUlSMFVIS2xOWUVaby9KcWNoeGpSMmRBUkZMMGx5TVI1UzhpYUZLeHp5Z1Z2OUJ6L243ODcwTlFDdlBxRGZuSFE2RERKeExqSFgzc1RMbWp5OUVhYktYb2FtcE1CVFpFVDhyc3hWOTV6OVMiLCJtYWMiOiJiY2Q2YWI1M2U2MDIzMjdlM2UyMDBiYjRmNjQzMmQ0NGNmZWM5MTU5ODlhNTExNWYzZGEyYTMxYzk3YjcyZTNjIiwidGFnIjoiIn0%3D; expires=Fri, 05-Apr-2024 03:00:03 GMT; Max-Age=7200; path=\/; sizu_session=eyJpdiI6Ii9FZGtFZjRUU1JaRHlSOEMyYS9rUlE9PSIsInZhbHVlIjoiclVFU20zUGdLSXFFcFpCZHEvWkFaSGJjTGNPVDRUckhvZXE5NWEybWhhMHlSTjE2NUt1ZUFRdGYvbE9tUDFUd2w0ZTE3c2kyZTNLTnFUd2t0KzNJU2xtdkY1NFhxK1BRRXpLQ3dmNnFKNzBMcXZJeCtkMnBzQ2w5ZDZ1QS90NHQiLCJtYWMiOiJjZWIxNDhlM2M2ODBlZDIwNWRmN2RjNTFmNzA2MjQ2MzBlNmE3ZDkwNDBmZTMxZmQwM2MyNjQ0NzgzNzM3ZWM4IiwidGFnIjoiIn0%3D; expires=Fri, 05-Apr-2024 03:00:03 GMT; Max-Age=7200; path=\/; httponly"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "noauth"
+    }
+}
