@@ -81,3 +81,44 @@ public/robots.txt
 
 
 以上。
+
+## Docker による開発環境
+
+Docker Desktop または Docker Engine と Docker Compose v2 があれば、ホストへ PHP、Composer、MySQL、Node.js を直接インストールせずに開発できる。
+
+初回のみ、以下を順に実行する。
+
+```bash
+cp .env.docker.example .env
+docker compose build
+docker compose up -d db app
+docker compose run --rm app composer install
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate
+docker compose exec app php artisan db:seed
+# 開発用のサンプルデータも必要な場合のみ実行
+docker compose exec app php artisan db:seed --class=DevDataSeeder
+docker compose up -d node
+```
+
+アプリケーションは http://localhost:7998 、MySQL はホストの `localhost:33060`（DB名・ユーザー・パスワードはすべて `saiz`、root パスワードは `root`）で利用できる。これらのDB認証情報はローカル開発専用であり、本番環境には使用しないこと。
+
+日常的な操作例は次のとおり。
+
+```bash
+# 起動・停止
+docker compose up -d
+docker compose down
+
+# Laravel コマンドとテスト
+docker compose exec app php artisan migrate
+docker compose exec app php artisan test
+
+# フロントエンドの監視ビルド（初回は npm ci を自動実行）
+docker compose up node
+
+# コンテナ内シェル
+docker compose exec app bash
+```
+
+DB データは名前付きボリューム `db-data` に保持される。DBを含めて初期化する必要がある場合だけ、`docker compose down -v` を実行してから初回手順をやり直すこと。この操作はローカル開発DBを削除する。

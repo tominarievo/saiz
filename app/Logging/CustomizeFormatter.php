@@ -70,7 +70,7 @@ class CustomizeFormatter
 
     public function addExtraFields(array $record): array
     {
-        $user = Auth::user();
+        $user = app()->bound('auth') ? Auth::user() : null;
         $record['extra']['userid'] = $user->id ?? null;
         $record['extra']['username'] = $user ? $user->name : '未ログイン';
         return $record;

@@ -161,7 +161,7 @@ return [
         App\Providers\RouteServiceProvider::class,
 
         // IDE 補完
-        'Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider',
+        // 'Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider',
 
     ],
 

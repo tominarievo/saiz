@@ -1,0 +1,51 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    ports:
+      - "7998:80"
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TZ: Asia/Tokyo
+
+  db:
+    image: mysql:8.0
+    ports:
+      - "33060:3306"
+    environment:
+      TZ: Asia/Tokyo
+      MYSQL_DATABASE: saiz
+      MYSQL_USER: saiz
+      MYSQL_PASSWORD: saiz
+      MYSQL_ROOT_PASSWORD: root
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  node:
+    image: node:16-bullseye
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - node-modules:/var/www/html/node_modules
+    environment:
+      TZ: Asia/Tokyo
+    command: >
+      sh -c 'if [ ! -d node_modules/.bin ]; then npm ci; fi;
+      npm run watch-poll'
+
+volumes:
+  db-data:
+  node-modules:
+  vendor:
