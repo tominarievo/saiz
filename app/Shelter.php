@@ -58,7 +58,7 @@ class Shelter extends Model
      * @param SupportCategory1|null $support_category1 サポートカテゴリ1のオブジェクト（デフォルトはnull）
      * @return array 最高のシグナルを含む配列
      */
-    public function getMaxSignal($condition, SupportCategory1 $support_category1 = null)
+    public function getMaxSignal($condition, ?SupportCategory1 $support_category1 = null)
     {
         $query = Report::where('shelter_id', $this->id);
 
@@ -116,7 +116,7 @@ class Shelter extends Model
      * @param SupportCategory1|null $support_category1 サポートカテゴリ1のオブジェクト（デフォルトはnull）
      * @return array 最高のシグナルを含む配列
      */
-    public function getMaxSignalForMap($condition, SupportCategory1 $support_category1 = null)
+    public function getMaxSignalForMap($condition, ?SupportCategory1 $support_category1 = null)
     {
         $query = Report::where('shelter_id', $this->id);
 

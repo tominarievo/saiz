@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/wp-json/wp/v2/media/"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "id": 2001,
+      "source_url": "http://wp-stub:8080/media/test.png"
+    }
+  }
+}

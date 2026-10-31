@@ -20,6 +20,16 @@ use Illuminate\Support\Str;
  */
 class InformationController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (!in_array($request->route()->getActionMethod(), ['index', 'show'], true)) {
+                $this->authorizeAdmin();
+            }
+            return $next($request);
+        });
+    }
+
     /**
      * リソースの一覧を表示する。
      *
@@ -117,12 +127,12 @@ class InformationController extends Controller
                 $image_res_json = $this->uploadEyeCatchToWp($one_file->file_path, $one_file->file_name);
             }
 
-            $url = env("WORDPRESS_URL")."/wp-json/wp/v2/posts";
+            $url = config("wordpress.url")."/wp-json/wp/v2/posts";
             $data = [
                 'title'   => $entity->title,
                 'content' => $entity->content,
                 'status'  => $entity->status ? 'publish' : 'draft',
-                'categories' => [env('WORDPRESS_CATEGORY_ID', 1)], // デフォルト値として1を使用
+                'categories' => [config('wordpress.category_id', 1)], // デフォルト値として1を使用
             ];
 
             // 添付ファイルがある場合のみfeatured_mediaをセットする。
@@ -132,7 +142,7 @@ class InformationController extends Controller
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_USERPWD, env("WORDPRESS_USER").":".env("WORDPRESS_APP_PASSWORD"));
+            curl_setopt($ch, CURLOPT_USERPWD, config("wordpress.user").":".config("wordpress.app_password"));
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
@@ -180,12 +190,12 @@ class InformationController extends Controller
      */
     private function uploadEyeCatchToWp($relative_path, $file_name)
     {
-        $url = env("WORDPRESS_URL") . "/wp-json/wp/v2/media/";
+        $url = config("wordpress.url") . "/wp-json/wp/v2/media/";
         $data = Storage::get($relative_path);
     
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_USERPWD, env("WORDPRESS_USER") . ":" . env("WORDPRESS_APP_PASSWORD"));
+        curl_setopt($ch, CURLOPT_USERPWD, config("wordpress.user") . ":" . config("wordpress.app_password"));
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Content-Type: image/png', "Content-Disposition: attachment; filename=" . $file_name
         ));

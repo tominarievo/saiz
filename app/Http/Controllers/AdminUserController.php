@@ -24,6 +24,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class AdminUserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $this->authorizeAdmin();
+            return $next($request);
+        });
+    }
+
     /**
      * ユーザー一覧を表示する
      *

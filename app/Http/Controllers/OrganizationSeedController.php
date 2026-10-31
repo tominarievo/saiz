@@ -53,6 +53,9 @@ class OrganizationSeedController extends Controller
      */
     public function store(Request $request)
     {
+        $organization = Organization::findOrFail($request->input('organization_id'));
+        $this->authorize('update', $organization);
+
         $support_category2 = SupportCategory2::find($request->input('support_category2_id'));
 
         $organization_seed = new OrganizationSeed();
@@ -86,6 +89,8 @@ class OrganizationSeedController extends Controller
      */
     public function edit(Request $request, OrganizationSeed $organization_seed)
     {
+        $this->authorize('update', $organization_seed->organization);
+
         $this->setCommonVars();
 
         return view("organization_seeds.edit", compact("organization_seed"));
@@ -100,6 +105,8 @@ class OrganizationSeedController extends Controller
      */
     public function update(Request $request, OrganizationSeed $organization_seed)
     {
+        $this->authorize('update', $organization_seed->organization);
+
         $support_category2 = SupportCategory2::find($request->input('support_category2_id'));
 
         $organization_seed->support_category1_id = $support_category2->support_category1_id;
@@ -120,6 +127,8 @@ class OrganizationSeedController extends Controller
      */
     public function destroy(Request $request, OrganizationSeed $organization_seed)
     {
+        $this->authorize('update', $organization_seed->organization);
+
         $organization_seed->delete();
 
         $request->session()->flash('status', '削除に成功しました。');
