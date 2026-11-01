@@ -96,6 +96,6 @@ return [
     /*
      * メール送信時にBCCで追加する受信者リスト
      */
-    'bcc' => explode(',', env('MAIL_BCC_DEFAULT', '')),
+    'bcc' => array_values(array_filter(array_map('trim', explode(',', (string) env('MAIL_BCC_DEFAULT', ''))))),
 
 ];
