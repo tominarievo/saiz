@@ -11,6 +11,14 @@ use Illuminate\Http\Request;
  */
 class SupportCategory1Controller extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $this->authorizeAdmin();
+            return $next($request);
+        });
+    }
+
     /**
      * 支援種別(大)画面を表示する
      *

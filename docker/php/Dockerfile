@@ -1,10 +1,11 @@
-FROM php:7.4-apache-bullseye
+FROM php:8.4-apache-bookworm
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
         libonig-dev \
         unzip \
+        curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install -j2 mbstring

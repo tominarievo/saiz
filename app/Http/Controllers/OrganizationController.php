@@ -130,6 +130,8 @@ class OrganizationController extends Controller
      */
     public function create(Request $request)
     {
+        $this->authorizeAdmin();
+
         $organization = new Organization();
         $organization->status = true;
 
@@ -146,6 +148,8 @@ class OrganizationController extends Controller
      */
     public function store(OrganizationRequest $request)
     {
+        $this->authorizeAdmin();
+
         $organization = new Organization();
         $organization->name          = $request->input('name');
         $organization->status        = filled($request->input('status')) ?: false;
@@ -208,6 +212,7 @@ class OrganizationController extends Controller
      */
     public function update(OrganizationRequest $request, Organization $organization)
     {
+        $this->authorize('update', $organization);
 
         $organization->name          = $request->input('name');
         $organization->status        = filled($request->input('status')) ?: false;
@@ -241,6 +246,8 @@ class OrganizationController extends Controller
      */
     public function destroy(OrganizationRequest $request, Organization $organization)
     {
+        $this->authorize('delete', $organization);
+
 //        TODO ユーザーや情報があれば削除不可にする。
 
         $organization->delete();

@@ -65,9 +65,19 @@ class Information extends Model
      */
     public function getEditedContent()
     {
-        // タグが含まれている場合はWYSIWYGコンテンツとして未加工とします。
+        // タグが含まれている場合はWYSIWYGコンテンツとしてサニタイズします。
         if (preg_match("/[\<\>]+/u", $this->content)) {
-            return $this->content;
+            $config = \HTMLPurifier_Config::createDefault();
+            $config->set('Cache.DefinitionImpl', null);
+            $config->set(
+                'HTML.Allowed',
+                'p,br,strong,b,em,i,u,ul,ol,li,a[href|target|rel],h1,h2,h3,h4,h5,h6,blockquote,pre,code,img[src|alt|width|height]'
+            );
+            $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
+
+            $purifier = new \HTMLPurifier($config);
+
+            return $purifier->purify($this->content);
         }
 
         $result = nl2br(e($this->content));
@@ -100,5 +110,21 @@ class Information extends Model
         }
 
         return $json_list[0];
+    }
+
+    /**
+     * 添付ファイルのjsonを配列として取得します。
+     *
+     * @return array
+     */
+    public function getFileDataArray()
+    {
+        if (blank($this->file_data)) {
+            return [];
+        }
+
+        $decoded = json_decode($this->file_data, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 }

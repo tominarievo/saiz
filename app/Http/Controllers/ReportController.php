@@ -48,8 +48,8 @@ class ReportController extends Controller
         $condition->include_disabled_shelters = $request->input('include_disabled_shelters');
 
 
-        if (filled($from) && ( ! Auth::user()->isAdmin())) {
-            // 団体ユーザーでログインし、メニューからの遷移時は支援団体の初期値は自身の団体
+        if (!Auth::user()->isAdmin()) {
+            // 団体ユーザーは常に自団体の日報に限定する
             $condition->organization_id = Auth::user()->organization_id;
         } else {
             $condition->organization_id = $request->input('organization_id');
@@ -458,6 +458,10 @@ class ReportController extends Controller
         $report = new Report();
         $report->fill($request->validated());
 
+        $report->organization_id = Auth::user()->isAdmin()
+            ? $request->input('organization_id')
+            : Auth::user()->organization_id;
+
         $report->writer = filled($request->input('prev_writer'))
             ? $request->input('prev_writer')
             : $request->input('writer');
@@ -548,6 +552,8 @@ class ReportController extends Controller
     */
     public function show(Request $request, Report $report)
     {
+        $this->authorize('show_all', $report);
+
         /*
          * 支援種別の情報を画面表示用に整理する。
          */
@@ -636,6 +642,10 @@ class ReportController extends Controller
 
         $report->fill($request->validated());
 
+        $report->organization_id = Auth::user()->isAdmin()
+            ? $request->input('organization_id')
+            : Auth::user()->organization_id;
+
         $report->writer = filled($request->input('prev_writer'))
             ? $request->input('prev_writer')
             : $request->input('writer');
@@ -722,6 +732,8 @@ class ReportController extends Controller
      */
     public function destroy(Request $request, Report $report)
     {
+        $this->authorize('delete', $report);
+
 //        TODO ユーザーに権限があれば削除可能にする。
 
         $report->delete();

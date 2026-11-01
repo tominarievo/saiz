@@ -21,14 +21,15 @@ class PlanCommentController extends Controller
      */
     public function store(Request $request)
     {
-		$plan_comment = new PlanComment();
-        $plan_comment->plan_id = $request->input('plan_id');
+        $plan = Plan::findOrFail($request->input('plan_id'));
+        $this->authorize('update', $plan);
+
+        $plan_comment = new PlanComment();
+        $plan_comment->plan_id = $plan->id;
         $plan_comment->user_id = Auth::user()->id;
         $plan_comment->post_datetime = Carbon::now();
         $plan_comment->comment = $request->input('comment');
         $plan_comment->save();
-
-        $plan = Plan::findOrFail($plan_comment->plan_id);
 
         $ret = new \stdClass();
         $ret->planComments = $plan->planComments;
@@ -45,9 +46,11 @@ class PlanCommentController extends Controller
     public function delete(Request $request)
     {
         $comment = PlanComment::findOrFail($request->input("commentId"));
+        $this->authorize('delete', $comment->plan);
+
         $comment->delete();
 
-        $plan = Plan::findOrFail($request->input('plan_id'));
+        $plan = Plan::findOrFail($comment->plan_id);
 
         $ret = new \stdClass();
         $ret->planComments = $plan->planComments;

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use App\Traits\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -49,8 +49,8 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
 
         // アカウントロックの待機時間
-        $this->decayMinutes = env("MY_DECAY_MINUTES", 10);
-        $this->maxAttempts  = env("MY_MAX_ATTEMPTS", 5);
+        $this->decayMinutes = config('const.my_decay_minutes', 10);
+        $this->maxAttempts  = config('const.my_max_attempts', 5);
     }
 
     /**

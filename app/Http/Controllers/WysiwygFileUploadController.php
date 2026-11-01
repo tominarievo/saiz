@@ -18,9 +18,12 @@ class WysiwygFileUploadController extends Controller
      */
     public function upload(Request $request)
     {
-        $file_path =  ($request->file('file'))
-            ? $request->file('file')->store(Auth::user()->organization->org_dir_path('site_setting'), 'public')
-            : '';
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,pdf', 'max:5120'],
+        ]);
+
+        $directory = 'wysiwyg_uploads/' . (Auth::user()->organization_id ?: 'admin');
+        $file_path = $request->file('file')->store($directory, 'public');
 
         $ret = [
             'url' => Storage::url($file_path)

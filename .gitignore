@@ -12,3 +12,10 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 .env
+/.phpunit.cache/
+/.phpunit.result.cache
+
+/harness/reports/**
+!/harness/reports/.gitkeep
+!/harness/reports/*/
+!/harness/reports/*/summary.json

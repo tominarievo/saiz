@@ -56,13 +56,39 @@ class UtilController extends Controller
      */
     public function frontFileDownload(Request $request)
     {
-        $file_path = $request->input("file_path");
-        $file_name = $request->input("file_name");
+        $file_path = (string) $request->input("file_path");
+        $file_name = (string) $request->input("file_name");
+
+        abort_if($file_path === '', 404);
+        abort_if(strpos($file_path, '..') !== false || strpos($file_path, "\0") !== false, 404);
+        abort_if(strpos($file_path, '/') === 0 || strpos($file_path, '\\') === 0, 404);
+
+        $allowedPrefixes = [
+            'upload_files/',
+            'wysiwyg_uploads/',
+            'organizations/',
+            'organization/',
+        ];
+
+        $allowed = false;
+        foreach ($allowedPrefixes as $prefix) {
+            if (strpos($file_path, $prefix) === 0) {
+                $allowed = true;
+                break;
+            }
+        }
+
+        abort_unless($allowed, 404);
 
         // 存在チェック
         abort_unless(Storage::exists($file_path), 404);
 
-        $content_type = "text/plain";
+        $file_name = basename(str_replace(["\r", "\n", '"'], '', $file_name));
+        if ($file_name === '') {
+            $file_name = 'download';
+        }
+
+        $content_type = "application/octet-stream";
         $content_disposition = 'filename="'.$file_name.'"';
 
         $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));

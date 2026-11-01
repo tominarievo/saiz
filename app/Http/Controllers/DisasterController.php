@@ -9,6 +9,14 @@ use Illuminate\Http\Request;
 
 class DisasterController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $this->authorizeAdmin();
+            return $next($request);
+        });
+    }
+
     /**
      * 災害一覧ページを表示するためのメソッド
      *

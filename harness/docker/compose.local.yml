@@ -1,0 +1,17 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: harness/docker/php/Dockerfile
+      args:
+        PHP_IMAGE: ${PHP_IMAGE:-php:8.1-apache-bookworm}
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: saiz
+      DB_USERNAME: saiz
+      DB_PASSWORD: saiz
+      APP_ENV: local
+      APP_DEBUG: "true"
+      WORDPRESS_URL: ""

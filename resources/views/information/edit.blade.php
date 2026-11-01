@@ -188,7 +188,7 @@
       data: {
         file_max: 1,
         errors: null,
-        uploadedFiles: {!! $entity->file_data ?? "[]" !!},
+        uploadedFiles: @json($entity->getFileDataArray()),
       },
       mounted() {
 

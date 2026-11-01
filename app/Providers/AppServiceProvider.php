@@ -40,12 +40,12 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // アクセスを全てhttpsに。
-        if (env('SSL_USE')) {
+        if (config('const.ssl_use')) {
             $this->app['request']->server->set('HTTPS','on');
         }
 
         // viewでエラーメッセージ表示に使用するカスタムフォーム
-        \Form::component('inputError', 'components.inputError', ['name']);
+        // (App\Support\Form::inputError で実装)
 
         // SQLのログ出力を本番環境以外で可能にする。
         if ( ! app()->environment('production')) {

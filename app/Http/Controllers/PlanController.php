@@ -108,8 +108,8 @@ class PlanController extends Controller
         try {
 
             $plan = new Plan();
-            $plan->organization_id = \Auth::user()->organization_id ?: $request->input("organization_id");
             $plan->fill($request->validated());
+            $plan->organization_id = \Auth::user()->organization_id ?: $request->input("organization_id");
 
             $this->setOrgViewLineIndex($plan);
 
@@ -174,9 +174,9 @@ class PlanController extends Controller
     {
         $from_page  = $request->input("from_page");
 
-        $plan = Plan::findOrFail($id);
+            $plan = Plan::findOrFail($id);
 
-        $this->authorize('update', $plan);
+            $this->authorize('update', $plan);
 
         $plan->from_page = $from_page;
 
@@ -226,6 +226,7 @@ class PlanController extends Controller
             $this->authorize('update', $plan);
 
             $plan->fill($request->validated());
+            $plan->organization_id = \Auth::user()->organization_id ?: $request->input("organization_id");
 
             $this->setOrgViewLineIndex($plan);
 
@@ -291,7 +292,7 @@ class PlanController extends Controller
 
             $plan = Plan::findOrFail($id);
 
-            $this->authorize('update', $plan);
+            $this->authorize('delete', $plan);
 
             // コメントを削除
             PlanComment::where('plan_id', $plan->id)

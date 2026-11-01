@@ -31,6 +31,7 @@ class InformationPostRequest extends FormRequest
             'published_at' => ['required', 'date'],
             'title'        => ['required', "max:200"],
             'content'      => ['required', 'max:40000'],
+            'file_data'    => ['nullable', 'json'],
         ];
     }
 

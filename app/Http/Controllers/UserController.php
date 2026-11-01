@@ -7,6 +7,7 @@ use App\Mail\UserCreatedMail;
 use App\Organization;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -31,6 +32,7 @@ class UserController extends Controller
 
         $organization_id = $request->input('organization_id');
         $organization = Organization::findOrFail($organization_id);
+        $this->authorizeOrganization($organization->id);
 
         $user->organization_id = $organization->id;
         $user->email = '';
@@ -47,7 +49,8 @@ class UserController extends Controller
     public function store(UserRequest $request)
     {
         $organization_id = $request->input('organization_id');
-    
+        $this->authorizeOrganization($organization_id);
+
         // トランザクションの開始
         DB::beginTransaction();
     
@@ -70,7 +73,7 @@ class UserController extends Controller
             ];
     
             // BCCで追加する受信者のリスト
-            $bccRecipients = explode(',', env('MAIL_BCC_DEFAULT', ''));
+            $bccRecipients = config('mail.bcc', []);
     
             // ユーザーへユーザー情報の通知メール
             if (filled($user->username)) {
@@ -113,6 +116,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
+        $this->authorizeOrganization($user->organization_id);
 
         return view('users.edit', compact('user'));
     }
@@ -126,6 +130,7 @@ class UserController extends Controller
      */
     public function update(UserRequest $request, User $user)
     {
+        $this->authorizeOrganization($user->organization_id);
 
         // トランザクションの開始
         DB::beginTransaction();
@@ -173,6 +178,8 @@ class UserController extends Controller
      */
     public function destroy(Request $request, User $user)
     {
+        $this->authorizeOrganization($user->organization_id);
+
         $user->delete();
 
         $request->session()->flash('status', 'ユーザーの削除に成功しました。');
