@@ -44,12 +44,21 @@
               {!! Form::model($user, ['route' => ['users.update', $user->id]]) !!}
               @method('PUT')
 
-              {{ Form::hidden('is_valid', null) }}
-
               <!-- /.card-header -->
                 <div class="card-body">
 
                   <p>必要事項を入力し、画面下のボタンを押してください。</p>
+
+                  <div class="form-group row">
+                    <label for="is_valid" class="col-sm-2 col-form-label">利用状態</label>
+                    <div class="col-sm-10">
+                      <div class="form-check">
+                        {{ Form::checkbox('is_valid', 1, $user->is_valid, ['class' => 'form-check-input', 'id' => 'is_valid']) }}
+                        <label class="form-check-label" for="is_valid">有効（ログインを許可する）</label>
+                      </div>
+                      {{ Form::inputError('is_valid') }}
+                    </div>
+                  </div>
 
                   {{-- 1入力項目 --}}
                   <div class="form-group row">

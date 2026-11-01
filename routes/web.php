@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\SignupController;
 use App\Http\Controllers\DisasterController;
 use App\Http\Controllers\DisasterShelterController;
 use App\Http\Controllers\HomeController;
@@ -34,6 +35,14 @@ Route::get('/', RootController::class);
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+
+// 利用規約
+Route::view('terms', 'legal.terms')->name('terms');
+
+// オンラインサインアップ（支援団体＋代表ユーザーの新規登録）
+Route::get('signup', [SignupController::class, 'create'])->middleware('guest')->name('signup.create');
+Route::post('signup', [SignupController::class, 'store'])->middleware(['guest', 'throttle:5,1'])->name('signup.store');
+Route::view('signup/complete', 'auth.signup_complete')->middleware('guest')->name('signup.complete');
 
 // パスワード再発行受付
 Route::view('/new_passwords/complete', 'password_regeneration_applications.complete')->name('new_passwords.complete');

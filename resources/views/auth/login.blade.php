@@ -103,6 +103,10 @@
 
 
   <p class="m-3">
+    <a href="{{ route('signup.create') }}">新規利用登録（オンラインサインアップ）</a>
+  </p>
+
+  <p class="m-3">
     <a href="<?php echo route('new_passwords.create'); ?>">パスワードをお忘れの場合</a>
   </p>
 

@@ -33,6 +33,13 @@ return [
     */
 
     'channels' => [
+        'audit' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security-audit.log'),
+            'level' => 'info',
+            'days' => (int) env('AUDIT_LOG_RETENTION_DAYS', 90),
+        ],
+
         'stack' => [
             'driver' => 'stack',
             'channels' => ['single', 'daily'],

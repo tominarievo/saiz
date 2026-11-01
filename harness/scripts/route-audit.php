@@ -13,6 +13,8 @@ $publicNamePatterns = [
     'refresh-csrf',
     'new_passwords.*',
     'password_regenerations.*',
+    'signup.*',
+    'terms',
 ];
 
 $publicUriPrefixes = [
