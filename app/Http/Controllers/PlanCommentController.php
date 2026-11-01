@@ -46,7 +46,7 @@ class PlanCommentController extends Controller
     public function delete(Request $request)
     {
         $comment = PlanComment::findOrFail($request->input("commentId"));
-        $this->authorize('delete', $comment->plan);
+        $this->authorize('delete', $comment);
 
         $comment->delete();
 

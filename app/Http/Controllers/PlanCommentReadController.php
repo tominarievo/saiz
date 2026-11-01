@@ -23,6 +23,8 @@ class PlanCommentReadController extends Controller
 
         $comment = PlanComment::findOrFail($comment_id);
 
+        $this->authorize('read', $comment);
+
         $read = PlanCommentRead::where("plan_comment_id", $comment_id)
             ->where('user_id', \Auth::user()->id)
             ->first();

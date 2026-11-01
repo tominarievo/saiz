@@ -99,17 +99,93 @@ class Information extends Model
      */
     public function getOneFile()
     {
-        if (blank($this->file_data)) {
+        $files = $this->getFiles();
+
+        if (blank($files)) {
             return null;
         }
 
-        $json_list = json_decode($this->file_data);
+        return (object) $files[0];
+    }
 
-        if ( ! $json_list) {
+    /**
+     * 添付ファイル情報を検証済みの配列で取得します。
+     * 不正な形式・パスの要素は除外します。
+     *
+     * @return array<int, array{file_path: string, file_name: string}>
+     */
+    public function getFiles(): array
+    {
+        return static::normalizeFileData($this->file_data) ?? [];
+    }
+
+    /**
+     * 画面(Vue)に渡す添付ファイル情報を取得します。
+     * 保存済みファイルはパスではなくお知らせIDと添付番号のURLで参照させます。
+     *
+     * @return array
+     */
+    public function getFilesForView(): array
+    {
+        $ret = [];
+
+        foreach ($this->getFiles() as $index => $file) {
+            $file['url'] = $this->exists
+                ? route('information.files.show', ['information' => $this->id, 'index' => $index])
+                : '';
+            $ret[] = $file;
+        }
+
+        return $ret;
+    }
+
+    /**
+     * 画面から送信された添付ファイル情報(JSON)を検証・正規化します。
+     * アップロード機能が発行したパス(upload_files/配下のファイル)以外は受け付けません。
+     *
+     * @param string|null $raw
+     * @return array|null 正常時の正規化済み配列、不正な形式の場合、null
+     */
+    public static function normalizeFileData(?string $raw): ?array
+    {
+        if (blank($raw)) {
+            return [];
+        }
+
+        $list = json_decode($raw, true);
+
+        if (! is_array($list)) {
             return null;
         }
 
-        return $json_list[0];
+        $ret = [];
+
+        foreach ($list as $file) {
+            if (! is_array($file)) {
+                return null;
+            }
+
+            $file_path = $file['file_path'] ?? '';
+            $file_name = $file['file_name'] ?? '';
+
+            // 画面上の空のアップロード枠は除外
+            if ($file_path === '' || $file_path === null) {
+                continue;
+            }
+
+            if (! is_string($file_path) || ! is_string($file_name)
+                || ! preg_match('#\Aupload_files/[A-Za-z0-9]+(\.[A-Za-z0-9]+)?\z#', $file_path)
+                || mb_strlen($file_name) > 255) {
+                return null;
+            }
+
+            $ret[] = [
+                'file_path' => $file_path,
+                'file_name' => $file_name,
+            ];
+        }
+
+        return $ret;
     }
 
     /**
@@ -119,12 +195,6 @@ class Information extends Model
      */
     public function getFileDataArray()
     {
-        if (blank($this->file_data)) {
-            return [];
-        }
-
-        $decoded = json_decode($this->file_data, true);
-
-        return is_array($decoded) ? $decoded : [];
+        return $this->getFiles();
     }
 }

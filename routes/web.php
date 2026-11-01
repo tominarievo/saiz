@@ -52,8 +52,6 @@ Route::middleware(['auth', 'my-common'])->group(function () {
 
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-    Route::get('file_download', [UtilController::class, 'frontFileDownload'])->name('utils.front_file_download');
-
     // TODO 削除
     Route::view('/ajax_search_sample', 'ajax_search_sample')->name('ajax_search_sample');
 
@@ -84,6 +82,7 @@ Route::middleware(['auth', 'my-common'])->group(function () {
     Route::get('/disaster_shelters/edit/{disaster_id}', [DisasterShelterController::class, 'edit'])->name('disaster_shelters.edit');
     Route::put('/disaster_shelters/update/{disaster_id}', [DisasterShelterController::class, 'update'])->name('disaster_shelters.update');
 
+    Route::get('/information/{information}/file/{index}', [InformationController::class, 'file'])->name('information.files.show');
     Route::resource('information', InformationController::class);
 
     Route::post('/plan_comments/store', [PlanCommentController::class, 'store'])->name('api.plan_comments.store');

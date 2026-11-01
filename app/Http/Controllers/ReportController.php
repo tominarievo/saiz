@@ -231,7 +231,7 @@ class ReportController extends Controller
              * report_idが渡されている場合はコピーとして画面を表示
              */
 
-            $report = Report::find($report_id);
+            $report = Report::findOrFail($report_id);
 
             // 権限チェック
             $this->authorize('update', $report);

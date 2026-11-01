@@ -60,7 +60,7 @@
                     <span v-for="(uploadedFile, index) in uploadedFiles">
 
                             <div v-if="uploadedFile.file_path" class="mb-2">
-                              <img :src="'/file_download?type=dataset&id=&file_path=' + uploadedFile.file_path + '&file_name=' + uploadedFile.file_name" style="width: 350px;" /><br />
+                              <img v-if="uploadedFile.url" :src="uploadedFile.url" style="width: 350px;" /><br />
 
                             </div>
 
@@ -102,7 +102,7 @@
       data: {
         file_max: 1,
         errors: null,
-        uploadedFiles: @json($entity->getFileDataArray()),
+        uploadedFiles: @json($entity->getFilesForView()),
       },
       mounted() {
 
@@ -166,6 +166,8 @@
               index: index,
               file_path: response.data.file_path,
               file_name: response.data.file_name,
+              // 未保存のファイルはサーバーのパスを使わずブラウザ上でプレビューする
+              url: URL.createObjectURL(uploadFileInfo),
             })
 
             self.syncHidden();

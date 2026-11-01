@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Organization;
 use App\Plan;
+use App\PlanComment;
 use App\Policies\OrganizationPolicy;
+use App\Policies\PlanCommentPolicy;
 use App\Policies\PlanPolicy;
 use App\Policies\ReportPolicy;
 use App\Policies\UserPolicy;
@@ -25,6 +27,7 @@ class AuthServiceProvider extends ServiceProvider
         Report::class => ReportPolicy::class,
         Organization::class => OrganizationPolicy::class,
         Plan::class => PlanPolicy::class,
+        PlanComment::class => PlanCommentPolicy::class,
     ];
 
     /**

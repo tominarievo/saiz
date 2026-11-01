@@ -18,6 +18,16 @@ class PlanRequest extends FormRequest
         return true;
     }
 
+    /*
+     * 団体ユーザーの支援団体はリクエスト値を信用せずログインユーザーの団体で上書きする
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->user() && ! $this->user()->isAdmin()) {
+            $this->merge(['organization_id' => $this->user()->organization_id]);
+        }
+    }
+
     /**
      * 検証ルールを取得します。
      *

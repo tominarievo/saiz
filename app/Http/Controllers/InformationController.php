@@ -9,11 +9,13 @@ use App\Information;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * 情報コントローラークラス
@@ -23,7 +25,7 @@ class InformationController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (!in_array($request->route()->getActionMethod(), ['index', 'show'], true)) {
+            if (!in_array($request->route()->getActionMethod(), ['index', 'show', 'file'], true)) {
                 $this->authorizeAdmin();
             }
             return $next($request);
@@ -105,6 +107,9 @@ class InformationController extends Controller
     public function store(InformationPostRequest $request)
     {
         Log::info('Information store function started.'); // 開始ログ
+
+        $file_data = $this->validatedFileData($request);
+
         DB::beginTransaction();
     
         $entity = new Information();
@@ -113,7 +118,7 @@ class InformationController extends Controller
             $entity->fill($request->validated());
             $entity->status    = filled($request->input('status')) ?: false;
             $entity->is_pickup = filled($request->input('is_pickup')) ?: false;
-            $entity->file_data = $request->input("file_data");
+            $entity->file_data = $file_data;
     
             $entity->save();
             Log::info('Information saved.', ['id' => $entity->id]); // 保存成功ログ
@@ -253,6 +258,83 @@ class InformationController extends Controller
     }
 
     /**
+     * お知らせの添付ファイルを取得する。
+     * ファイルパスは受け取らず、お知らせIDと添付番号から閲覧権限を確認した上で返却する。
+     *
+     * @param Information $information
+     * @param int $index
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    public function file(Information $information, $index)
+    {
+        $is_visible = Auth::user()->isAdmin()
+            || Information::conditionForFront()->whereKey($information->id)->exists();
+
+        abort_unless($is_visible, 404);
+
+        $files = $information->getFiles();
+
+        abort_unless(isset($files[$index]), 404);
+
+        $file = $files[$index];
+
+        abort_unless(Storage::exists($file['file_path']), 404);
+
+        // Content-Typeは利用者が指定したファイル名ではなく、保存時の拡張子から判定する
+        $ext = strtolower(pathinfo($file['file_path'], PATHINFO_EXTENSION));
+
+        $inline_types = [
+            'pdf'  => 'application/pdf',
+            'png'  => 'image/png',
+            'jpg'  => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+        ];
+
+        $attachment_types = [
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'txt'  => 'text/plain; charset=UTF-8',
+        ];
+
+        if (isset($inline_types[$ext])) {
+            $content_type = $inline_types[$ext];
+            $disposition = 'inline';
+        } else {
+            $content_type = $attachment_types[$ext] ?? 'application/octet-stream';
+            $disposition = 'attachment';
+        }
+
+        return Storage::response($file['file_path'], $file['file_name'] ?: basename($file['file_path']), [
+            'Content-Type'           => $content_type,
+            'X-Content-Type-Options' => 'nosniff',
+        ], $disposition);
+    }
+
+    /**
+     * 送信された添付ファイル情報を検証し、保存用のJSON文字列を返す。
+     *
+     * @param Request $request
+     * @return string
+     * @throws ValidationException
+     */
+    private function validatedFileData(Request $request)
+    {
+        $files = Information::normalizeFileData($request->input('file_data'));
+
+        if ($files === null) {
+            throw ValidationException::withMessages(['file_data' => '添付ファイルの情報が不正です。']);
+        }
+
+        foreach ($files as $file) {
+            if (! Storage::exists($file['file_path'])) {
+                throw ValidationException::withMessages(['file_data' => '添付ファイルが見つかりません。']);
+            }
+        }
+
+        return json_encode($files, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
      * 指定されたリソースを編集するためのフォームを表示する。
      *
      * @param  int  $id
@@ -279,10 +361,12 @@ class InformationController extends Controller
      */
     public function update(InformationPullRequest $request, $id)
     {
+        $entity = Information::findOrFail($id);
+
+        $file_data = $this->validatedFileData($request);
+
         // トランザクションの開始
         DB::beginTransaction();
-
-        $entity = Information::findOrFail($id);
 
         try {
             $entity->fill($request->validated());
@@ -292,7 +376,7 @@ class InformationController extends Controller
             $entity->is_pickup = filled($request->input('is_pickup')) ?: false;
 
             // 事前にアップロード済みのファイル情報
-            $entity->file_data = $request->input("file_data");
+            $entity->file_data = $file_data;
 
             $entity->save();
 

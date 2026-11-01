@@ -13,6 +13,14 @@ use Illuminate\Http\Request;
  */
 class DisasterShelterController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $this->authorizeAdmin();
+            return $next($request);
+        });
+    }
+
     /**
      * 災害情報の編集画面を表示する関数
      *
