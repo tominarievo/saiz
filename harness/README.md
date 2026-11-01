@@ -44,7 +44,7 @@ bash harness/scripts/frontend.sh
 
 ## スモークテストの認証情報
 
-`DevDataSeeder` の開発用ユーザーを既定値として使用します。環境変数で上書きできます。
+ゲート実行時は `gate.sh` が `DEV_ADMIN_PASSWORD` を自動生成し、`DevDataSeeder` とスモークテストで共用します。手動実行時は `SMOKE_PASSWORD` または `DEV_ADMIN_PASSWORD` を設定してください。
 
 ```bash
 SMOKE_USERNAME=... SMOKE_PASSWORD=... REQUIRE_AUTH=1 bash harness/scripts/smoke.sh

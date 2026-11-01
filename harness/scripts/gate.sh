@@ -7,6 +7,8 @@ export GATE
 
 STATUS=0
 
+export DEV_ADMIN_PASSWORD="${DEV_ADMIN_PASSWORD:-$(php -r 'echo bin2hex(random_bytes(16));')}"
+
 run_step() {
   local name="$1"
   shift

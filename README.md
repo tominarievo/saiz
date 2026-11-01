@@ -58,6 +58,7 @@ php artisan migrate
 ```
 
 8. 初期データの登録  
+`DevDataSeeder` を実行する前に、`.env` の `DEV_ADMIN_PASSWORD` に任意のパスワードを設定してください。  
 以下を実行し初期データを登録する。
 ```
 php artisan db:seed
