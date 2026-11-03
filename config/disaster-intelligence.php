@@ -40,7 +40,51 @@ return [
     */
 
     'sources' => [
+        1 => [
+            [
+                'type' => 'roads',
+                'url' => 'https://www.pref.toyama.jp/1501/kendodukuri/dourokouwan/douro/kj00014191.html',
+                'source_org' => '富山県 土木部道路課',
+                'published_at' => '2026-10-14T00:00:00+09:00',
+            ],
+            [
+                'type' => 'roads',
+                'url' => 'https://www.pref.toyama.jp/documents/56945/toyama-saigaitaisakuhonbuinkaigisiryo6.pdf',
+                'source_org' => '富山県災害対策本部',
+                'published_at' => '2026-09-01T07:00:00+09:00',
+            ],
+            [
+                'type' => 'roads',
+                'url' => 'https://www.hrr.mlit.go.jp/press/2026/8/260831hokuriku3.pdf',
+                'source_org' => '国土交通省 北陸地方整備局',
+                'published_at' => '2026-08-31T17:00:00+09:00',
+            ],
+            [
+                'type' => 'roads',
+                'url' => 'https://www.city.takaoka.toyama.jp/soshiki/kohohasshinka/2/3/2/14242.html',
+                'source_org' => '高岡市',
+                'published_at' => '2026-10-27T00:00:00+09:00',
+            ],
+            [
+                'type' => 'roads',
+                'url' => 'https://www.city.himi.toyama.jp/gyosei/soshiki/doroka/1/1/15189.html',
+                'source_org' => '氷見市',
+                'published_at' => '2026-09-04T18:00:00+09:00',
+            ],
+        ],
         5 => [
+            [
+                'type' => 'roads',
+                'url' => 'https://www.pref.chiba.lg.jp/bousai/bousai/documents/202608216.pdf',
+                'source_org' => '千葉県災害対策本部',
+                'published_at' => '2026-08-21T17:00:00+09:00',
+            ],
+            [
+                'type' => 'roads',
+                'url' => 'https://www.city.chiba.jp/kensetsu/doboku/dobokukanri/saigaifultukyuu.html',
+                'source_org' => '千葉市',
+                'published_at' => '2026-10-29T00:00:00+09:00',
+            ],
             [
                 'type' => 'meeting_insights',
                 'url' => 'https://www.pref.chiba.lg.jp/bousai/bousai/documents/202608154.pdf',
