@@ -35,7 +35,7 @@ class DisasterSourceParser
      * @param array<string, mixed> $attribution
      * @return array<int, array<string, mixed>>
      */
-    public function parse(string $type, string $text, array $attribution): array
+    public function parse(string $type, string $text, array $attribution, array $targetMunicipalities = []): array
     {
         if (!isset(self::PROMPTS[$type])) {
             throw new \InvalidArgumentException('未対応の資料種別です: ' . $type);
@@ -45,6 +45,7 @@ class DisasterSourceParser
             'SOURCE_ORG' => $attribution['source_org'] ?? '',
             'SOURCE_URL' => $attribution['source_url'] ?? '',
             'PUBLISHED_AT' => $attribution['source_published_at'] ?? '',
+            'TARGET_MUNICIPALITIES' => implode('、', $targetMunicipalities),
             'VEHICLE_CLASSES' => implode(', ', array_keys(config('disaster-intelligence.vehicles', []))),
             'DISCLAIMER' => config('disaster-intelligence.disclaimer', ''),
             'DOCUMENT_TEXT' => mb_substr($text, 0, 120000),
@@ -63,7 +64,7 @@ class DisasterSourceParser
         }
 
         return match ($type) {
-            'roads' => $this->normalizeRoads($payload['roads'] ?? [], $attribution),
+            'roads' => $this->normalizeRoads($payload['roads'] ?? [], $attribution, $targetMunicipalities),
             'waste_sites' => $this->normalizeWasteSites($payload['waste_sites'] ?? [], $attribution),
             'meeting_insights' => $this->normalizeMeetingInsights($payload['meeting_insights'] ?? [], $attribution),
             default => [],
@@ -75,7 +76,7 @@ class DisasterSourceParser
      * @param array<string, mixed> $attribution
      * @return array<int, array<string, mixed>>
      */
-    private function normalizeRoads(mixed $items, array $attribution): array
+    private function normalizeRoads(mixed $items, array $attribution, array $targetMunicipalities): array
     {
         if (!is_array($items)) {
             return [];
@@ -91,6 +92,17 @@ class DisasterSourceParser
             $roadName = trim((string) ($item['road_name'] ?? $item['name'] ?? ''));
 
             if ($roadName === '') {
+                continue;
+            }
+
+            $section = trim((string) ($item['section'] ?? ''));
+            $searchText = $roadName . ' ' . $section . ' ' . trim((string) ($item['reason'] ?? ''));
+
+            if (!$this->matchesTargetMunicipality(
+                $searchText,
+                (string) ($attribution['source_org'] ?? ''),
+                $targetMunicipalities
+            )) {
                 continue;
             }
 
@@ -223,6 +235,29 @@ class DisasterSourceParser
             'scraped_at' => $this->nullableDate($attribution['scraped_at'] ?? null),
             'raw_file_path' => $attribution['raw_file_path'] ?? null,
         ];
+    }
+
+    /**
+     * 対象市町村に該当する道路か判定する。
+     *
+     * @param string $searchText
+     * @param string $sourceOrg
+     * @param array<int, string> $targetMunicipalities
+     * @return bool
+     */
+    private function matchesTargetMunicipality(string $searchText, string $sourceOrg, array $targetMunicipalities): bool
+    {
+        if ($targetMunicipalities === []) {
+            return true;
+        }
+
+        foreach ($targetMunicipalities as $municipality) {
+            if ($municipality !== '' && (mb_strpos($searchText, $municipality) !== false || mb_strpos($sourceOrg, $municipality) !== false)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

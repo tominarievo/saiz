@@ -94,7 +94,13 @@ class ParseDisasterSourceJob implements ShouldQueue
             'raw_file_path' => $this->filePath,
         ];
 
-        $records = $parser->parse($this->type, $text, $attribution);
+        $targetMunicipalities = $disaster->localGovernments()
+            ->pluck('name')
+            ->filter()
+            ->values()
+            ->all();
+
+        $records = $parser->parse($this->type, $text, $attribution, $targetMunicipalities);
 
         foreach ($records as $record) {
             match ($this->type) {

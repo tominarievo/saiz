@@ -30,9 +30,16 @@ class LlmJsonClient
         $retries = max(1, (int) ($config['retries'] ?? 2));
         $lastError = null;
 
+        $sessionHeader = trim((string) ($config['session_header'] ?? ''));
+        $sessionId = trim((string) ($config['session_id'] ?? ''));
+        $headers = $sessionHeader !== '' && $sessionId !== ''
+            ? [$sessionHeader => $sessionId]
+            : [];
+
         for ($attempt = 1; $attempt <= $retries; $attempt++) {
             try {
                 $response = Http::withToken($apiKey)
+                    ->withHeaders($headers)
                     ->acceptJson()
                     ->timeout((int) ($config['timeout'] ?? 120))
                     ->post(rtrim((string) $config['base_url'], '/') . '/chat/completions', [

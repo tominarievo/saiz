@@ -26,6 +26,8 @@ return [
         'model' => env('DISASTER_LLM_MODEL', 'gpt-4o-mini'),
         'timeout' => (int) env('DISASTER_LLM_TIMEOUT', 120),
         'retries' => (int) env('DISASTER_LLM_RETRIES', 2),
+        'session_header' => env('DISASTER_LLM_SESSION_HEADER', 'x-opencode-session'),
+        'session_id' => env('DISASTER_LLM_SESSION_ID', 'saiz-disaster-intelligence'),
     ],
 
     /*
