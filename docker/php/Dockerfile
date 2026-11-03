@@ -8,7 +8,7 @@ RUN apt-get update \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install -j2 mbstring
+RUN docker-php-ext-install -j2 mbstring pcntl
 RUN docker-php-ext-install -j2 pdo_mysql \
     && a2enmod rewrite
 

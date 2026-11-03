@@ -13,6 +13,40 @@ services:
         condition: service_healthy
     environment:
       TZ: Asia/Tokyo
+      QUEUE_DRIVER: database
+    restart: unless-stopped
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TZ: Asia/Tokyo
+      QUEUE_DRIVER: database
+    command: php artisan queue:work --sleep=3 --tries=3 --timeout=1200
+    stop_grace_period: 60s
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TZ: Asia/Tokyo
+      QUEUE_DRIVER: database
+    command: php artisan schedule:work
     restart: unless-stopped
 
   db:
