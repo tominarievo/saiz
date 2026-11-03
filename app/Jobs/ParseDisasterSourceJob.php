@@ -62,7 +62,8 @@ class ParseDisasterSourceJob implements ShouldQueue
      */
     public function handle(
         PdfTextExtractor $extractor,
-        DisasterSourceParser $parser
+        DisasterSourceParser $parser,
+        \App\Services\DisasterIntelligence\RoadRecoveryVerifier $recoveryVerifier
     ): void {
         $disaster = Disaster::find($this->disasterId);
 
@@ -100,7 +101,24 @@ class ParseDisasterSourceJob implements ShouldQueue
             ->values()
             ->all();
 
-        $records = $parser->parse($this->type, $text, $attribution, $targetMunicipalities);
+        $records = array_values($parser->parse($this->type, $text, $attribution, $targetMunicipalities));
+        $recoveredIndexes = [];
+
+        if ($this->type === 'roads' && $records !== []) {
+            $recoveredIndexes = $recoveryVerifier->recoveredIndexes($this->disasterId, $records);
+
+            if ($recoveredIndexes !== []) {
+                $records = array_values(array_filter(
+                    $records,
+                    fn ($index) => !in_array($index, $recoveredIndexes, true),
+                    ARRAY_FILTER_USE_KEY
+                ));
+            }
+
+            RoadRegulation::where('disaster_id', $this->disasterId)
+                ->where('source_url', $this->sourceUrl)
+                ->delete();
+        }
 
         foreach ($records as $record) {
             match ($this->type) {
@@ -115,6 +133,7 @@ class ParseDisasterSourceJob implements ShouldQueue
             'disaster_id' => $this->disasterId,
             'type' => $this->type,
             'records' => count($records),
+            'recovered' => count($recoveredIndexes),
             'file' => $this->filePath,
         ]);
     }
