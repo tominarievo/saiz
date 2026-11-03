@@ -102,9 +102,11 @@
   </div>
 
 
-  <p class="m-3">
-    <a href="{{ route('signup.create') }}">新規利用登録（オンラインサインアップ）</a>
-  </p>
+  @if (config('signup.enabled'))
+    <p class="m-3">
+      <a href="{{ route('signup.create') }}">新規利用登録（オンラインサインアップ）</a>
+    </p>
+  @endif
 
   <p class="m-3">
     <a href="<?php echo route('new_passwords.create'); ?>">パスワードをお忘れの場合</a>

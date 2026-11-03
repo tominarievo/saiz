@@ -13,6 +13,7 @@ services:
         condition: service_healthy
     environment:
       TZ: Asia/Tokyo
+    restart: unless-stopped
 
   db:
     image: mysql:8.0
@@ -32,6 +33,27 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    restart: unless-stopped
+
+  db-test:
+    image: mysql:8.0
+    ports:
+      - "33061:3306"
+    environment:
+      TZ: Asia/Tokyo
+      MYSQL_DATABASE: saiz_test
+      MYSQL_USER: saiz
+      MYSQL_PASSWORD: saiz
+      MYSQL_ROOT_PASSWORD: root
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-test-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
 
   node:
     image: node:16-bullseye
@@ -47,5 +69,6 @@ services:
 
 volumes:
   db-data:
+  db-test-data:
   node-modules:
   vendor:

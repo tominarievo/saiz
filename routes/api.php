@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\DisasterIntelligenceController;
 use App\Http\Controllers\Api\UserController;
 
 /*
@@ -13,3 +14,8 @@ use App\Http\Controllers\Api\UserController;
 */
 
 Route::middleware('auth:api')->get('/user', [UserController::class, 'show']);
+
+Route::prefix('v1/disaster')->group(function () {
+    Route::get('roads', [DisasterIntelligenceController::class, 'roads'])->name('api.v1.disaster.roads');
+    Route::get('waste-sites', [DisasterIntelligenceController::class, 'wasteSites'])->name('api.v1.disaster.waste_sites');
+});

@@ -1,0 +1,43 @@
+あなたは災害廃棄物・仮置場の受入レギュレーションを構造化する専門員です。
+次の資料から、専門災害支援団体が搬入可否を判断するための情報だけを抽出してください。
+
+出典組織: {{SOURCE_ORG}}
+一次URL: {{SOURCE_URL}}
+公表日時: {{PUBLISHED_AT}}
+対象車両区分: {{VEHICLE_CLASSES}}
+免責: {{DISCLAIMER}}
+
+抽出ルール:
+- 仮置場名、開設状況、受入期間、受入可能品目、受入不可品目、車両制限、支援団体の搬入条件を抽出する。
+- 過去の搬入実績、処理量、感謝状、挨拶は除外する。
+- 位置が示される場合は緯度経度を推定する。推定できない場合は null にする。
+- geometry は GeoJSON Point（[経度, 緯度]）を返す。
+- status は open / closed / unknown のいずれか。
+- max_payload_tons は数値。不明なら null。
+- support_conditions は許可証要否、事前予約、窓口、搬入時間などをキーと値で整理する。
+- 推測で存在しない仮置場や品目を作らない。
+
+出力JSON:
+{
+  "waste_sites": [
+    {
+      "name": "仮置場名",
+      "status": "open",
+      "geometry": {"type": "Point", "coordinates": [139.0, 35.0]},
+      "latitude": null,
+      "longitude": null,
+      "acceptance_start_at": "2026-08-20T09:00:00+09:00",
+      "acceptance_end_at": null,
+      "vehicle_limit": "2t車まで",
+      "max_payload_tons": 2,
+      "entry_allowed": true,
+      "accepted_items": ["木くず", "金属くず"],
+      "rejected_items": ["危険物", "家電"],
+      "support_conditions": {"permit_required": true, "contact": "窓口名", "notes": ""},
+      "metadata": {"notes": ""}
+    }
+  ]
+}
+
+資料本文:
+{{DOCUMENT_TEXT}}

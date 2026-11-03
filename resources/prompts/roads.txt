@@ -1,0 +1,39 @@
+あなたは災害時の道路・交通規制情報を構造化するGISアナリストです。
+次の資料から、専門災害支援団体（技術系NPO、重機オペレーター、家屋保全チーム）が通行判断に使える道路規制だけを抽出してください。
+
+出典組織: {{SOURCE_ORG}}
+一次URL: {{SOURCE_URL}}
+公表日時: {{PUBLISHED_AT}}
+対象車両区分: {{VEHICLE_CLASSES}}
+免責: {{DISCLAIMER}}
+
+抽出ルール:
+- 現在の通行可否、規制区間、規制種別、対象車両、事由を優先する。
+- 過去の実績報告、挨拶、一般論、解決済みで現在規制がないものは除外する。
+- 位置が文章で示される場合は、路線名・区間名・交差点名を手がかりに座標を推定する。推定できない場合は latitude / longitude を null にする。
+- geometry は GeoJSON の LineString または Point を返す。座標順は [経度, 緯度]。
+- 規制種別は full_closure / alternating / large_vehicle / weight_limit / other のいずれか。
+- 対象車両は light_truck, 2t, 4t, large の配列。不明なら空配列。
+- 信頼度ランクは、公的API・自治体PDFの明記なら A、プローブ・現地報告なら B、AI推定なら C。
+- 推測で存在しない道路や規制を作らない。不明点は metadata.notes に残す。
+
+出力JSON:
+{
+  "roads": [
+    {
+      "road_name": "路線名",
+      "section": "規制区間",
+      "regulation_type": "full_closure",
+      "vehicle_classes": ["light_truck", "2t", "4t", "large"],
+      "reason": "事由",
+      "geometry": {"type": "LineString", "coordinates": [[139.0, 35.0], [139.1, 35.1]]},
+      "latitude": null,
+      "longitude": null,
+      "confidence_rank": "A",
+      "metadata": {"notes": ""}
+    }
+  ]
+}
+
+資料本文:
+{{DOCUMENT_TEXT}}

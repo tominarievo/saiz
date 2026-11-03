@@ -15,6 +15,9 @@ $publicNamePatterns = [
     'password_regenerations.*',
     'signup.*',
     'terms',
+    'disasters.show',
+    'disasters.school_districts',
+    'disasters.historical_boundaries',
 ];
 
 $publicUriPrefixes = [
@@ -41,6 +44,10 @@ foreach (app('router')->getRoutes() as $route) {
 
     $hasAuth = false;
     foreach ($middleware as $item) {
+        if (!is_string($item)) {
+            continue;
+        }
+
         if ($item === 'auth' || strpos($item, 'auth:') === 0) {
             $hasAuth = true;
             break;
@@ -70,7 +77,7 @@ foreach (app('router')->getRoutes() as $route) {
         'name' => $name,
         'uri' => $uri,
         'methods' => $route->methods(),
-        'middleware' => array_values($middleware),
+        'middleware' => array_values(array_filter($middleware, 'is_string')),
         'has_auth' => $hasAuth,
         'is_public' => $isPublic,
     ];

@@ -1,0 +1,5 @@
+SHELL=/bin/bash
+PATH=/home/saiz/.opencode/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOME=/home/saiz
+
+0 */3 * * * /home/saiz/work/saiz/harness/scripts/refresh-disaster-links.sh >> /home/saiz/work/saiz/storage/logs/disaster-links-cron.log 2>&1

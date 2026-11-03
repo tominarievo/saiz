@@ -54,7 +54,8 @@
                 <thead>
                 <tr>
                   <th >名称</th>
-                  <th>年</th>
+                  <th>年度</th>
+                  <th>市町村</th>
                   <th>操作</th>
                 </tr>
                 </thead>
@@ -66,10 +67,17 @@
                   <td><strong style="font-size: 1.1em">{{ $user->name }}</strong></td>
                   <td>{{ $user->npo_col_2 }}</td>
                   <td>
+                    @foreach($user->localGovernments as $localGovernment)
+                      <span class="badge badge-light">{{ $localGovernment->prefecture->name }} {{ $localGovernment->name }}</span>
+                    @endforeach
+                  </td>
+                  <td>
 
                     <a href="{{ route('disaster_shelters.edit', ['disaster_id' => $user->id]) }}" class="btn btn-default"><i class="fas fa-edit"></i> 支援先を登録する</a>
 
                     {{--                    @can('update', $user)--}}
+                      <a href="{{ route('disasters.show', ['disaster' => $user->id]) }}" class="btn btn-default"><i class="fas fa-eye"></i> 詳細</a>
+
                       <a href="{{ route('disasters.edit', ['disaster' => $user->id]) }}" class="btn btn-default"><i class="fas fa-edit"></i> 編集</a>
 {{--                    @endcan--}}
 

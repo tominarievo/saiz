@@ -60,7 +60,36 @@ class DisasterRequest extends FormRequest
             }
         }
 
+        $ret['local_government_ids'] = 'nullable|array';
+        $ret['local_government_ids.*'] = ['integer', Rule::exists('local_governments', 'id')];
+        $ret['information_links'] = 'nullable|array';
+        $ret['information_links.*.description'] = 'nullable|string|max:1000';
+        $ret['information_links.*.url'] = 'nullable|string|max:2048|url';
+
         return $ret;
+    }
+
+    /**
+     * 追加のバリデーションを設定します。
+     *
+     * @param \Illuminate\Validation\Validator $validator
+     * @return void
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            foreach ((array) $this->input('information_links', []) as $index => $link) {
+                $description = trim((string) ($link['description'] ?? ''));
+                $url = trim((string) ($link['url'] ?? ''));
+
+                if (($description === '') !== ($url === '')) {
+                    $validator->errors()->add(
+                        "information_links.{$index}.url",
+                        '概要文とURLは両方入力してください。'
+                    );
+                }
+            }
+        });
     }
 
     /*
@@ -70,8 +99,12 @@ class DisasterRequest extends FormRequest
     public function attributes() {
         return [
             'name' => '名称',
-            'npo_col_2' => '年',
-            'event_date' => '発生日',
+            'npo_col_2' => '年度',
+            'event_date' => '発生年月日',
+            'local_government_ids' => '市町村',
+            'local_government_ids.*' => '市町村',
+            'information_links.*.description' => '概要文',
+            'information_links.*.url' => 'URL',
         ];
     }
 

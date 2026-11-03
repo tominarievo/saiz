@@ -122,4 +122,73 @@ docker compose up node
 docker compose exec app bash
 ```
 
+## 学区レイヤーデータの取込
+
+災害詳細の地図に表示する小学校区・中学校区は、国土数値情報 A27/A32（2023年度）を都道府県単位で取り込む。災害情報で使用する都道府県ごとに実行する。
+
+```bash
+# 例: 東京都
+docker compose exec app php artisan school-districts:import 13
+
+# 再取込
+docker compose exec app php artisan school-districts:import 13 --force
+```
+
+取込データは `storage/app/school-districts/` に保存される。地図の学区レイヤーは、災害に登録された市町村の行政区域コードを使って必要なファイルだけを読み込む。
+
+MLITへ接続できない環境では、A27/A32のZIPを `A27-23_13_GML.zip`、`A32-23_13_GML.zip` の形式でディレクトリへ配置し、`--source-dir` を指定する。
+
+```bash
+docker compose exec app php artisan school-districts:import 13 \
+  --source-dir=/var/www/html/storage/app/import-school-districts/source
+```
+
+出典: 国土数値情報（小学校区A27・中学校区A32、国土交通省）。ライセンスは CC BY 4.0（一部自治体は利用条件あり）。学区データは参考情報であり、公式な通学区域を示すものではない。
+
+## 合併前行政界データの取込
+
+災害詳細の「合併前行政界」レイヤーは、歴史的行政区域データセットβ版（CODH / Geoshape）の都道府県別TopoJSONをDBに取り込んで表示する。富山県・石川県は1920-01-01〜2023-01-01の80時点を収録済み。
+
+```bash
+# 富山県・石川県
+docker compose exec app php artisan historical-boundaries:import 16
+docker compose exec app php artisan historical-boundaries:import 17
+
+# 再取込・解像度変更
+docker compose exec app php artisan historical-boundaries:import 16 --force --resolution=h
+```
+
+取込データは `historical_boundaries` テーブルに保存される。出典は『歴史的行政区域データセットβ版』（CODH作成、doi:10.20676/00000447）および国土数値情報（行政区域N03）。データはβ版の参考情報であり、公式な行政界を示すものではない。
+
 DB データは名前付きボリューム `db-data` に保持される。DBを含めて初期化する必要がある場合だけ、`docker compose down -v` を実行してから初回手順をやり直すこと。この操作はローカル開発DBを削除する。
+
+## WSL2 + Docker Engine（移行後）
+
+このプロジェクトは WSL2 Ubuntu の `/home/saiz/work/saiz` へ移行済み。Windowsからは `\\wsl$\Ubuntu\home\saiz\work\saiz` で参照できる。**移行前のWindows側パスは編集に使用しないこと。**
+
+Docker Desktop ではなく、Ubuntu内の Docker Engine と Docker Compose を使用する。
+
+```bash
+# 起動（Dockerサービスはsystemdで自動起動）
+wsl -d Ubuntu -u saiz -- bash -lc "cd ~/work/saiz && docker compose up -d db db-test app"
+
+# Dockerが停止している場合
+wsl -d Ubuntu -u root -- systemctl start docker
+
+# テスト
+wsl -d Ubuntu -u saiz -- bash -lc "cd ~/work/saiz && docker compose exec -T app php artisan test"
+```
+
+テスト用DBは `db-test` サービス（ホスト側ポート33061）で提供する。DB・アプリのデータはWSL内のDockerボリュームに保持される。
+
+WSL2のアイドル自動停止でコンテナが止まらないよう、Windows側の `%USERPROFILE%\.wslconfig` に以下を設定する。
+
+```ini
+[general]
+instanceIdleTimeout=-1
+
+[wsl2]
+vmIdleTimeout=-1
+```
+
+`app` / `db` / `db-test` は `restart: unless-stopped` で自動再起動する。

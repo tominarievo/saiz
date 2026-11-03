@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'guest' => App\Http\Middleware\RedirectIfAuthenticated::class,
             'my-common' => App\Http\Middleware\MyCommonMiddleware::class,
+            'signup.enabled' => App\Http\Middleware\EnsureSignupEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

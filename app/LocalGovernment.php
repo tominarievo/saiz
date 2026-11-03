@@ -49,6 +49,26 @@ class LocalGovernment extends Model
     }
 
     /**
+     * この市町村に属する避難所を取得します。
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function evacuationShelters()
+    {
+        return $this->hasMany(EvacuationShelter::class);
+    }
+
+    /**
+     * この市町村に属するボランティアセンターを取得します。
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function volunteerCenters()
+    {
+        return $this->hasMany(VolunteerCenter::class);
+    }
+
+    /**
      * ローカル自治体に属する町の関連を取得します。
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -235,6 +255,16 @@ class LocalGovernment extends Model
             self::destroy($record->id);
         }
 
+    }
+
+    /**
+     * この市町村に関連する災害を取得します。
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function disasters()
+    {
+        return $this->belongsToMany(Disaster::class, 'disaster_local_government');
     }
 
 }

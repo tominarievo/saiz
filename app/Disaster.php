@@ -66,4 +66,54 @@ class Disaster extends Model
     {
         return $this->belongsToMany(Shelter::class);
     }
+
+    /**
+     * この災害に関連する市町村を取得します。
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function localGovernments()
+    {
+        return $this->belongsToMany(LocalGovernment::class, 'disaster_local_government');
+    }
+
+    /**
+     * この災害に関連する最新情報リンクを取得します。
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function informationLinks()
+    {
+        return $this->hasMany(DisasterInformationLink::class)->orderBy('id');
+    }
+
+    /**
+     * 道路規制情報
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function roadRegulations()
+    {
+        return $this->hasMany(RoadRegulation::class);
+    }
+
+    /**
+     * 災害廃棄物・仮置場情報
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function wasteSites()
+    {
+        return $this->hasMany(WasteSite::class);
+    }
+
+    /**
+     * 会議インテリジェンス
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function meetingInsights()
+    {
+        return $this->hasMany(MeetingInsight::class);
+    }
 }

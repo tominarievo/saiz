@@ -14,6 +14,13 @@ class SignupTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['signup.enabled' => true]);
+    }
+
     /**
      * サインアップの正常な入力値
      *
@@ -224,5 +231,17 @@ class SignupTest extends TestCase
         $this->actingAs($user)
             ->get(route('signup.create'))
             ->assertRedirect('/home');
+    }
+
+    public function test_signup_is_blocked_when_online_signup_is_disabled(): void
+    {
+        config(['signup.enabled' => false]);
+
+        $this->get(route('signup.create'))->assertForbidden();
+        $this->get(route('signup.complete'))->assertForbidden();
+        $this->post(route('signup.store'), $this->validPayload())->assertForbidden();
+
+        $this->assertSame(0, User::count());
+        $this->assertSame(0, Organization::count());
     }
 }

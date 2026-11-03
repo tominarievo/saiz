@@ -40,9 +40,39 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 Route::view('terms', 'legal.terms')->name('terms');
 
 // オンラインサインアップ（支援団体＋代表ユーザーの新規登録）
-Route::get('signup', [SignupController::class, 'create'])->middleware('guest')->name('signup.create');
-Route::post('signup', [SignupController::class, 'store'])->middleware(['guest', 'throttle:5,1'])->name('signup.store');
-Route::view('signup/complete', 'auth.signup_complete')->middleware('guest')->name('signup.complete');
+Route::get('signup', [SignupController::class, 'create'])->middleware(['guest', 'signup.enabled'])->name('signup.create');
+Route::post('signup', [SignupController::class, 'store'])->middleware(['guest', 'signup.enabled', 'throttle:5,1'])->name('signup.store');
+Route::view('signup/complete', 'auth.signup_complete')->middleware(['guest', 'signup.enabled'])->name('signup.complete');
+
+// 災害情報詳細（ゲスト公開）
+Route::get('disasters/{disaster}', [DisasterController::class, 'show'])
+    ->where('disaster', '[0-9]+')
+    ->middleware('my-common')
+    ->name('disasters.show');
+Route::get('disasters/{disaster}/intelligence', [DisasterController::class, 'intelligence'])
+    ->where('disaster', '[0-9]+')
+    ->middleware('my-common')
+    ->name('disasters.intelligence');
+Route::get('disasters/{disaster}/school-districts/{type}', [DisasterController::class, 'schoolDistricts'])
+    ->where('disaster', '[0-9]+')
+    ->whereIn('type', ['elementary', 'junior_high'])
+    ->name('disasters.school_districts');
+Route::get('disasters/{disaster}/population', [DisasterController::class, 'population'])
+    ->where('disaster', '[0-9]+')
+    ->name('disasters.population');
+Route::get('disasters/{disaster}/small-areas', [DisasterController::class, 'smallAreas'])
+    ->where('disaster', '[0-9]+')
+    ->name('disasters.small_areas');
+Route::get('disasters/{disaster}/evacuation-shelters', [DisasterController::class, 'evacuationShelters'])
+    ->where('disaster', '[0-9]+')
+    ->name('disasters.evacuation_shelters');
+Route::get('disasters/{disaster}/volunteer-centers', [DisasterController::class, 'volunteerCenters'])
+    ->where('disaster', '[0-9]+')
+    ->name('disasters.volunteer_centers');
+Route::get('disasters/{disaster}/historical-boundaries/{date}', [DisasterController::class, 'historicalBoundaries'])
+    ->where('disaster', '[0-9]+')
+    ->where('date', '\d{4}-\d{2}-\d{2}')
+    ->name('disasters.historical_boundaries');
 
 // パスワード再発行受付
 Route::view('/new_passwords/complete', 'password_regeneration_applications.complete')->name('new_passwords.complete');
@@ -68,7 +98,7 @@ Route::middleware(['auth', 'my-common'])->group(function () {
 
     Route::resource('organizations', OrganizationController::class);
     Route::resource('shelters', ShelterController::class);
-    Route::resource('disasters', DisasterController::class);
+    Route::resource('disasters', DisasterController::class)->except(['show']);
     Route::resource('support_category1s', SupportCategory1Controller::class);
     Route::resource('support_category2s', SupportCategory2Controller::class);
     Route::resource('reports', ReportController::class);

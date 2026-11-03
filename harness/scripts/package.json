@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "shapefile": "^0.6.6",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -40,4 +40,5 @@ class Prefecture extends Model
             ? $prefecture->id
             : null;
     }
+
 }

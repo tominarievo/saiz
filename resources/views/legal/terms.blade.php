@@ -64,7 +64,9 @@
           @auth
             <a href="{{ route('home') }}" class="btn btn-outline-primary">ホームに戻る</a>
           @else
-            <a href="{{ route('signup.create') }}" class="btn btn-primary">利用登録へ</a>
+            @if (config('signup.enabled'))
+              <a href="{{ route('signup.create') }}" class="btn btn-primary">利用登録へ</a>
+            @endif
             <a href="{{ route('login') }}" class="btn btn-outline-primary">ログインへ</a>
           @endauth
         </nav>
