@@ -317,18 +317,25 @@
     .map-app-tabs {
       display: flex;
       flex-shrink: 0;
+      overflow-x: auto;
       background: #f8f9fa;
       border-bottom: 1px solid #e9ecef;
+      scrollbar-width: none;
+    }
+
+    .map-app-tabs::-webkit-scrollbar {
+      display: none;
     }
 
     .map-app-tab {
-      flex: 1;
-      padding: 0.7rem 0.35rem;
+      flex: 0 0 auto;
+      min-width: 3.45rem;
+      padding: 0.7rem 0.3rem;
       color: #6c757d;
       background: transparent;
       border: 0;
       border-bottom: 2px solid transparent;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
       white-space: nowrap;
       cursor: pointer;
@@ -466,6 +473,88 @@
       color: #6c757d;
       font-size: 0.75rem;
       line-height: 1.5;
+    }
+
+    .support-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .support-section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .support-section-header strong {
+      color: #1f3c88;
+      font-size: 0.9rem;
+    }
+
+    .support-section-header span {
+      color: #6c757d;
+      font-size: 0.72rem;
+    }
+
+    .support-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .support-empty {
+      margin: 0;
+      color: #6c757d;
+      font-size: 0.78rem;
+    }
+
+    .support-item {
+      display: block;
+      width: 100%;
+      padding: 0.55rem 0.6rem;
+      border: 1px solid #e9ecef;
+      border-radius: 0.4rem;
+      background: #fff;
+      color: #212529;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .support-item:hover,
+    .support-item:focus-visible {
+      border-color: #17a2b8;
+      background: #f1fbfd;
+      outline: none;
+    }
+
+    .support-item-name {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .support-item-meta {
+      display: block;
+      margin-top: 0.15rem;
+      color: #6c757d;
+      font-size: 0.72rem;
+      line-height: 1.4;
+    }
+
+    .support-badge {
+      display: inline-block;
+      padding: 0.08rem 0.38rem;
+      border-radius: 0.25rem;
+      color: #fff;
+      font-size: 0.66rem;
+      font-weight: 700;
+      line-height: 1.4;
     }
 
     .population-municipality + .population-municipality {
@@ -796,6 +885,10 @@
         <button type="button" class="map-app-tab" data-map-panel="population" role="tab" aria-selected="false">
           人口
         </button>
+        <button type="button" class="map-app-tab" data-map-panel="support" role="tab" aria-selected="false">
+          支援
+          <span id="support-tab-count" class="map-app-tab-count" hidden></span>
+        </button>
         <button type="button" class="map-app-tab" data-map-panel="layers" role="tab" aria-selected="false">
           レイヤー
         </button>
@@ -904,6 +997,30 @@
           </div>
         </section>
 
+        <section class="map-app-panel" data-map-panel-content="support" role="tabpanel" hidden>
+          <div class="support-panel">
+            <div>
+              <div class="support-section-header">
+                <strong>道路規制</strong>
+                <span id="support-road-count">読み込み中...</span>
+              </div>
+              <div id="support-road-list" class="support-list">
+                <p class="support-empty">道路規制を読み込んでいます...</p>
+              </div>
+            </div>
+
+            <div>
+              <div class="support-section-header">
+                <strong>災害廃棄物・仮置場</strong>
+                <span id="support-waste-count">読み込み中...</span>
+              </div>
+              <div id="support-waste-list" class="support-list">
+                <p class="support-empty">仮置場情報を読み込んでいます...</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="map-app-panel" data-map-panel-content="layers" role="tabpanel" hidden>
           <div class="map-layer-control">
             <div class="map-layer-title">表示レイヤー</div>
@@ -939,6 +1056,19 @@
                 <input type="checkbox" class="map-layer-toggle" data-layer="volunteer_centers">
                 ボランティアセンター
               </label>
+            </details>
+
+            <details>
+              <summary>専門支援</summary>
+              <label class="map-layer-option">
+                <input type="checkbox" class="map-layer-toggle" data-layer="roads">
+                道路規制
+              </label>
+              <label class="map-layer-option">
+                <input type="checkbox" class="map-layer-toggle" data-layer="waste_sites">
+                災害廃棄物・仮置場
+              </label>
+              <div class="map-layer-status">赤: 全面通行止 / 橙: 片側交互 / 紫: 大型・重量規制 / 緑: 仮置場</div>
             </details>
 
             <details>
@@ -1074,6 +1204,8 @@
 
           if (panel === 'population') {
             loadPopulationData();
+          } else if (panel === 'support') {
+            loadSupportPanelData();
           }
         });
       });
@@ -1186,6 +1318,8 @@
       const smallAreaUrl = @json(route('disasters.small_areas', ['disaster' => $disaster->id]));
       const evacuationShelterUrl = @json(route('disasters.evacuation_shelters', ['disaster' => $disaster->id]));
       const volunteerCenterUrl = @json(route('disasters.volunteer_centers', ['disaster' => $disaster->id]));
+      const roadRegulationUrl = @json(url('/api/v1/disaster/roads'));
+      const wasteSiteUrl = @json(url('/api/v1/disaster/waste-sites'));
       const mapElement = document.getElementById('disaster-map');
 
       if (!mapElement) {
@@ -1222,12 +1356,17 @@
       map.attributionControl.addAttribution(
         'ボランティア: <a href="https://www.saigaivc.com/" target="_blank" rel="noopener">全国社会福祉協議会 被災者支援・ボランティア情報</a>'
       );
+      map.attributionControl.addAttribution(
+        '道路規制・仮置場: 千葉県防災ポータル、自治体公開情報等'
+      );
 
       const layers = {
         municipalities: L.featureGroup().addTo(map),
         small_areas: L.featureGroup(),
         shelters: L.featureGroup(),
         volunteer_centers: L.featureGroup(),
+        roads: L.featureGroup(),
+        waste_sites: L.featureGroup(),
         elementary: L.featureGroup(),
         junior_high: L.featureGroup(),
         historical: L.featureGroup(),
@@ -2014,6 +2153,346 @@
         return layerLoads.volunteer_centers;
       }
 
+      const supportRoadFeatures = [];
+      const supportWasteFeatures = [];
+      const supportRoadLayers = new Map();
+      const supportWasteLayers = new Map();
+
+      function roadTypeMeta(type) {
+        return {
+          full_closure: { label: '全面通行止', color: '#dc3545', guidance: 'この区間は通行できません。迂回路を確認してください。' },
+          alternating: { label: '片側交互通行', color: '#fd7e14', guidance: '片側交互で通行できます。現地の誘導に従ってください。' },
+          large_vehicle: { label: '大型車規制', color: '#6f42c1', guidance: '大型車は通行できません。車両制限を確認してください。' },
+          weight_limit: { label: '重量規制', color: '#6f42c1', guidance: '重量制限があります。積載量を確認してください。' }
+        }[type] || { label: 'その他規制', color: '#495057', guidance: '現地の規制表示を確認してください。' };
+      }
+
+      function vehicleLabels(vehicles) {
+        const labels = {
+          light_truck: '軽トラ',
+          '2t': '2t車',
+          '4t': '4t車',
+          large: '大型回送車'
+        };
+
+        if (!Array.isArray(vehicles) || vehicles.length === 0) {
+          return '車両制限なし・不明';
+        }
+
+        return vehicles.map(function (vehicle) {
+          return labels[vehicle] || vehicle;
+        }).join(' / ');
+      }
+
+      function sourceHtml(properties) {
+        const source = properties.source || {};
+        const url = String(source.url || '');
+
+        return '<div class="support-item-meta">'
+          + '出典: ' + escapeHtml(source.org || '不明')
+          + (url.startsWith('http') ? '<br><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">一次資料を開く</a>' : '')
+          + (source.published_at ? '<br>公表: ' + escapeHtml(new Date(source.published_at).toLocaleString('ja-JP')) : '')
+          + '</div>';
+      }
+
+      function roadPopup(properties) {
+        const meta = roadTypeMeta(properties.regulation_type);
+        const root = document.createElement('div');
+
+        root.innerHTML = '<strong>' + escapeHtml(properties.road_name || '道路規制') + '</strong>'
+          + '<div style="margin:0.3rem 0;"><span class="support-badge" style="background:' + meta.color + '">' + escapeHtml(meta.label) + '</span></div>'
+          + '<div style="font-weight:600;margin-bottom:0.35rem;">' + escapeHtml(meta.guidance) + '</div>'
+          + '<div><strong>区間:</strong> ' + escapeHtml(properties.section || '不明') + '</div>'
+          + '<div><strong>対象車両:</strong> ' + escapeHtml(vehicleLabels(properties.vehicle_classes)) + '</div>'
+          + '<div><strong>事由:</strong> ' + escapeHtml(properties.reason || '不明') + '</div>'
+          + '<div class="support-item-meta">信頼度: ' + escapeHtml(properties.confidence_rank || 'C') + '</div>'
+          + sourceHtml(properties)
+          + '<div class="support-item-meta" style="color:#b02a37;margin-top:0.35rem;">' + escapeHtml(properties.disclaimer || '出典の一次情報を確認してください。') + '</div>';
+
+        return root;
+      }
+
+      function wasteStatusMeta(status) {
+        return {
+          open: { label: '開設中', color: '#198754' },
+          closed: { label: '閉鎖', color: '#6c757d' }
+        }[status] || { label: '不明', color: '#0d6efd' };
+      }
+
+      function wastePopup(properties) {
+        const meta = wasteStatusMeta(properties.status);
+        const root = document.createElement('div');
+
+        root.innerHTML = '<strong>' + escapeHtml(properties.name || '仮置場') + '</strong>'
+          + '<div style="margin:0.3rem 0;"><span class="support-badge" style="background:' + meta.color + '">' + escapeHtml(meta.label) + '</span></div>'
+          + '<div><strong>受入品目:</strong> ' + escapeHtml((properties.accepted_items || []).join('、') || '不明') + '</div>'
+          + '<div><strong>受入不可:</strong> ' + escapeHtml((properties.rejected_items || []).join('、') || '不明') + '</div>'
+          + '<div><strong>車両制限:</strong> ' + escapeHtml(properties.vehicle_limit || (properties.max_payload_tons ? properties.max_payload_tons + 'tまで' : '不明')) + '</div>'
+          + '<div><strong>搬入条件:</strong> ' + escapeHtml(JSON.stringify(properties.support_conditions || {})) + '</div>'
+          + sourceHtml(properties)
+          + '<div class="support-item-meta" style="color:#b02a37;margin-top:0.35rem;">' + escapeHtml(properties.disclaimer || '出典の一次情報を確認してください。') + '</div>';
+
+        return root;
+      }
+
+      function focusSupportFeature(layerName, id, layersById) {
+        const layer = layersById.get(id);
+        const toggle = document.querySelector('.map-layer-toggle[data-layer="' + layerName + '"]');
+
+        if (toggle && !toggle.checked) {
+          toggle.checked = true;
+          map.addLayer(layers[layerName]);
+          saveLayerVisibility();
+        }
+
+        if (!layer) {
+          return;
+        }
+
+        if (layer.getBounds && layer.getBounds().isValid()) {
+          map.fitBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 15 });
+        } else if (layer.getLatLng) {
+          map.setView(layer.getLatLng(), 15);
+        }
+
+        if (layer.openPopup) {
+          layer.openPopup();
+        }
+      }
+
+      function renderSupportRoadList() {
+        const list = document.getElementById('support-road-list');
+        const count = document.getElementById('support-road-count');
+
+        if (!list) {
+          return;
+        }
+
+        if (count) {
+          count.textContent = supportRoadFeatures.length + '件';
+        }
+
+        if (supportRoadFeatures.length === 0) {
+          list.innerHTML = '<p class="support-empty">道路規制は登録されていません。</p>';
+          return;
+        }
+
+        list.innerHTML = '';
+        supportRoadFeatures.forEach(function (feature) {
+          const properties = feature.properties || {};
+          const meta = roadTypeMeta(properties.regulation_type);
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'support-item';
+          button.innerHTML = '<span class="support-badge" style="background:' + meta.color + '">' + escapeHtml(meta.label) + '</span>'
+            + '<span class="support-item-name">' + escapeHtml(properties.road_name || '道路名不明') + '</span>'
+            + '<span class="support-item-meta">' + escapeHtml(properties.section || '区間不明') + '</span>'
+            + '<span class="support-item-meta">対象: ' + escapeHtml(vehicleLabels(properties.vehicle_classes)) + '</span>';
+          button.addEventListener('click', function () {
+            focusSupportFeature('roads', properties.id, supportRoadLayers);
+          });
+          list.appendChild(button);
+        });
+      }
+
+      function renderSupportWasteList() {
+        const list = document.getElementById('support-waste-list');
+        const count = document.getElementById('support-waste-count');
+
+        if (!list) {
+          return;
+        }
+
+        if (count) {
+          count.textContent = supportWasteFeatures.length + '件';
+        }
+
+        if (supportWasteFeatures.length === 0) {
+          list.innerHTML = '<p class="support-empty">仮置場は登録されていません。</p>';
+          return;
+        }
+
+        list.innerHTML = '';
+        supportWasteFeatures.forEach(function (feature) {
+          const properties = feature.properties || {};
+          const meta = wasteStatusMeta(properties.status);
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'support-item';
+          button.innerHTML = '<span class="support-badge" style="background:' + meta.color + '">' + escapeHtml(meta.label) + '</span>'
+            + '<span class="support-item-name">' + escapeHtml(properties.name || '仮置場名不明') + '</span>'
+            + '<span class="support-item-meta">受入: ' + escapeHtml((properties.accepted_items || []).join('、') || '不明') + '</span>'
+            + '<span class="support-item-meta">車両: ' + escapeHtml(properties.vehicle_limit || (properties.max_payload_tons ? properties.max_payload_tons + 'tまで' : '不明')) + '</span>';
+          button.addEventListener('click', function () {
+            focusSupportFeature('waste_sites', properties.id, supportWasteLayers);
+          });
+          list.appendChild(button);
+        });
+      }
+
+      function updateSupportTabCount() {
+        const badge = document.getElementById('support-tab-count');
+
+        if (!badge) {
+          return;
+        }
+
+        const total = supportRoadFeatures.length + supportWasteFeatures.length;
+        badge.textContent = String(total);
+        badge.hidden = total === 0;
+      }
+
+      function loadRoadLayer() {
+        if (supportRoadFeatures.length > 0) {
+          return Promise.resolve();
+        }
+
+        if (layerLoads.roads) {
+          return layerLoads.roads;
+        }
+
+        const toggle = document.querySelector('.map-layer-toggle[data-layer="roads"]');
+
+        layerLoads.roads = fetch(roadRegulationUrl + '?disaster_id=' + encodeURIComponent(@json($disaster->id)), {
+          headers: { 'Accept': 'application/json' }
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error(response.status);
+            }
+            return response.json();
+          })
+          .then(function (data) {
+            supportRoadFeatures.length = 0;
+            supportRoadLayers.clear();
+
+            (data.features || []).forEach(function (feature) {
+              supportRoadFeatures.push(feature);
+            });
+
+            const geoLayer = L.geoJSON(data, {
+              style: function (feature) {
+                const meta = roadTypeMeta(feature.properties.regulation_type);
+                return { color: meta.color, weight: 5, opacity: 0.95, lineCap: 'round' };
+              },
+              pointToLayer: function (feature, latlng) {
+                const meta = roadTypeMeta(feature.properties.regulation_type);
+                return L.circleMarker(latlng, {
+                  radius: 8,
+                  color: '#fff',
+                  weight: 2,
+                  fillColor: meta.color,
+                  fillOpacity: 1
+                });
+              },
+              onEachFeature: function (feature, layer) {
+                const id = feature.properties.id;
+                supportRoadLayers.set(id, layer);
+                layer.bindPopup(roadPopup(feature.properties));
+              }
+            });
+
+            layers.roads.clearLayers();
+            geoLayer.addTo(layers.roads);
+            renderSupportRoadList();
+            updateSupportTabCount();
+            setLayerStatus('道路規制を表示中（' + supportRoadFeatures.length + '件）');
+            fitMapToVisibleLayers();
+          })
+          .catch(function () {
+            supportRoadFeatures.length = 0;
+            supportRoadLayers.clear();
+            renderSupportRoadList();
+            updateSupportTabCount();
+            setLayerStatus('道路規制データを取得できませんでした。');
+            if (toggle) {
+              toggle.checked = false;
+            }
+            map.removeLayer(layers.roads);
+          })
+          .finally(function () {
+            layerLoads.roads = null;
+          });
+
+        return layerLoads.roads;
+      }
+
+      function loadWasteSiteLayer() {
+        if (supportWasteFeatures.length > 0) {
+          return Promise.resolve();
+        }
+
+        if (layerLoads.waste_sites) {
+          return layerLoads.waste_sites;
+        }
+
+        const toggle = document.querySelector('.map-layer-toggle[data-layer="waste_sites"]');
+
+        layerLoads.waste_sites = fetch(wasteSiteUrl + '?disaster_id=' + encodeURIComponent(@json($disaster->id)), {
+          headers: { 'Accept': 'application/json' }
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error(response.status);
+            }
+            return response.json();
+          })
+          .then(function (data) {
+            supportWasteFeatures.length = 0;
+            supportWasteLayers.clear();
+
+            (data.features || []).forEach(function (feature) {
+              supportWasteFeatures.push(feature);
+            });
+
+            const geoLayer = L.geoJSON(data, {
+              pointToLayer: function (feature, latlng) {
+                const meta = wasteStatusMeta(feature.properties.status);
+                return L.circleMarker(latlng, {
+                  radius: 9,
+                  color: '#fff',
+                  weight: 2,
+                  fillColor: meta.color,
+                  fillOpacity: 1
+                });
+              },
+              onEachFeature: function (feature, layer) {
+                const id = feature.properties.id;
+                supportWasteLayers.set(id, layer);
+                layer.bindPopup(wastePopup(feature.properties));
+              }
+            });
+
+            layers.waste_sites.clearLayers();
+            geoLayer.addTo(layers.waste_sites);
+            renderSupportWasteList();
+            updateSupportTabCount();
+            setLayerStatus('仮置場を表示中（' + supportWasteFeatures.length + '件）');
+            fitMapToVisibleLayers();
+          })
+          .catch(function () {
+            supportWasteFeatures.length = 0;
+            supportWasteLayers.clear();
+            renderSupportWasteList();
+            updateSupportTabCount();
+            setLayerStatus('仮置場データを取得できませんでした。');
+            if (toggle) {
+              toggle.checked = false;
+            }
+            map.removeLayer(layers.waste_sites);
+          })
+          .finally(function () {
+            layerLoads.waste_sites = null;
+          });
+
+        return layerLoads.waste_sites;
+      }
+
+      function loadSupportPanelData() {
+        loadRoadLayer();
+        loadWasteSiteLayer();
+      }
+
       function loadSmallAreaLayer() {
         if (layers.small_areas.getLayers().length > 0) {
           return Promise.resolve();
@@ -2309,6 +2788,20 @@
                   map.invalidateSize();
                 }, 100);
               });
+            } else if (name === 'roads') {
+              loadRoadLayer().then(function () {
+                fitMapToVisibleLayers();
+                window.setTimeout(function () {
+                  map.invalidateSize();
+                }, 100);
+              });
+            } else if (name === 'waste_sites') {
+              loadWasteSiteLayer().then(function () {
+                fitMapToVisibleLayers();
+                window.setTimeout(function () {
+                  map.invalidateSize();
+                }, 100);
+              });
             } else {
               loadSchoolDistrictLayer(name).then(function () {
                 fitMapToVisibleLayers();
@@ -2439,6 +2932,10 @@
           loader = loadShelterLayer();
         } else if (name === 'volunteer_centers') {
           loader = loadVolunteerCenterLayer();
+        } else if (name === 'roads') {
+          loader = loadRoadLayer();
+        } else if (name === 'waste_sites') {
+          loader = loadWasteSiteLayer();
         } else {
           loader = loadSchoolDistrictLayer(name);
         }
