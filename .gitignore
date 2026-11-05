@@ -1,22 +1,86 @@
+# Dependencies
 /node_modules
 node_modules/
+/vendor
+
+# Python
 __pycache__/
+*.py[cod]
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.docker.example
+!.env.production.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+*.ovpn
+*.kdbx
+auth.json
+credentials.json
+secrets.json
+*.secret
+*.secrets
+/public/.organization_env
+
+# Laravel
 /public/hot
 /public/storage
-/public/.organization_env
 /storage/*.key
-/vendor
+/.phpunit.cache/
+/.phpunit.result.cache
+
+# Local tooling and editors
 /.idea
 /.vscode
 /.vagrant
+/.opencode/
+/.direnv/
+/.history/
 Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
-.env
-/.phpunit.cache/
-/.phpunit.result.cache
+*.log
+*.swp
+*.swo
+*~
 
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Generated documentation
+/.phpdoc/
+/.phpdoc-cache/
+/coverage/
+
+# Backups and database dumps
+/backups/
+/backup/
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+*.bak-*
+*.orig
+*.gz
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# Harness reports
 /harness/reports/**
 !/harness/reports/.gitkeep
 !/harness/reports/*/
