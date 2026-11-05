@@ -376,21 +376,21 @@ def ingest_shelter_status(admin_code, payload):
     return result.stdout.strip()
 
 
-def acquire_lock():
-    if LOCK_FILE.exists():
-        age = time.time() - LOCK_FILE.stat().st_mtime
+def acquire_lock(lock_file=LOCK_FILE):
+    if lock_file.exists():
+        age = time.time() - lock_file.stat().st_mtime
 
         if age < 21600:
             return False
 
-        LOCK_FILE.unlink(missing_ok=True)
+        lock_file.unlink(missing_ok=True)
 
-    LOCK_FILE.write_text(str(os.getpid()), encoding='utf-8')
+    lock_file.write_text(str(os.getpid()), encoding='utf-8')
     return True
 
 
-def release_lock():
-    LOCK_FILE.unlink(missing_ok=True)
+def release_lock(lock_file=LOCK_FILE):
+    lock_file.unlink(missing_ok=True)
 
 
 def parse_chiba_portal_shelter_statuses(page):
@@ -541,19 +541,85 @@ def process_chiba_portal_shelter_statuses(municipalities, args, log_path):
             log(f"市町村 {admin_code}「{name}」: {error}", log_path)
 
 
+def parse_kumamoto_portal_open_shelters(payload, admin_code):
+    items = payload.get('items') or []
+    active = []
+    seen = set()
+
+    for item in items:
+        if not str(item.get('municipalityCd', '')).startswith(admin_code):
+            continue
+
+        name = str(item.get('name', '')).strip()
+
+        if not name or name in seen:
+            continue
+
+        if item.get('shelterStartTimestamp') and not item.get('shelterEndTimestamp'):
+            seen.add(name)
+            active.append({'name': name})
+
+    return active
+
+
+def process_kumamoto_portal_shelter_statuses(municipalities, args, log_path):
+    data_url = 'https://portal.bousai.pref.kumamoto.jp/data/shelter/shelter.json'
+    page_url = 'https://portal.bousai.pref.kumamoto.jp/?p=evacuation%2Fshelter'
+
+    try:
+        payload = json.loads(fetch_source_text(data_url))
+    except Exception as error:
+        log(f'防災情報くまもと: 避難所JSONを取得できませんでした。{data_url} ({error})', log_path)
+        return
+
+    if not isinstance(payload, dict) or not isinstance(payload.get('items'), list):
+        log('防災情報くまもと: 避難所JSONの形式が不正です。', log_path)
+        return
+
+    for municipality in municipalities:
+        admin_code = str(municipality.get('admin_code', ''))
+        name = municipality.get('municipality', '')
+        active = parse_kumamoto_portal_open_shelters(payload, admin_code)
+        status = 'open' if active else 'closed'
+        payload_item = {
+            'status': status,
+            'source_name': '防災情報くまもと 避難所情報',
+            'source_url': page_url,
+            'active': active,
+        }
+
+        if args.dry_run:
+            log(f"市町村 {admin_code}「{name}」: DryRunのため {status} / {len(active)}件を検出（更新なし）。", log_path)
+            continue
+
+        try:
+            ingest_shelter_status(admin_code, payload_item)
+            log(f"市町村 {admin_code}「{name}」: 防災情報くまもとの開設状況を更新しました（{status} / {len(active)}件）。", log_path)
+        except Exception as error:
+            log(f"市町村 {admin_code}「{name}」: {error}", log_path)
+
+
 def process_shelter_statuses(args, log_path):
     municipalities = fetch_shelter_status_context()
-    portal_municipalities = [
+    chiba_municipalities = [
         municipality for municipality in municipalities
         if municipality.get('collector') == 'chiba_portal'
     ]
 
-    if portal_municipalities:
-        process_chiba_portal_shelter_statuses(portal_municipalities, args, log_path)
+    if chiba_municipalities:
+        process_chiba_portal_shelter_statuses(chiba_municipalities, args, log_path)
+
+    kumamoto_municipalities = [
+        municipality for municipality in municipalities
+        if municipality.get('collector') == 'kumamoto_portal'
+    ]
+
+    if kumamoto_municipalities:
+        process_kumamoto_portal_shelter_statuses(kumamoto_municipalities, args, log_path)
 
     municipalities = [
         municipality for municipality in municipalities
-        if municipality.get('collector') != 'chiba_portal'
+        if municipality.get('collector') not in ('chiba_portal', 'kumamoto_portal')
     ]
 
     for municipality in municipalities:

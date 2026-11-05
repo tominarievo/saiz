@@ -27,7 +27,9 @@ class RootController extends Controller
             ->limit(5)
             ->get();
 
-        $signalCounts = ShelterStatusSummary::today();
+        $signalCounts = config('public.show_support_status', false)
+            ? ShelterStatusSummary::today()
+            : [];
 
         return view('public.index', compact('disasters', 'information', 'signalCounts'));
     }

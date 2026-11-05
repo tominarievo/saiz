@@ -7,7 +7,9 @@
   <div class="public-hero">
     <div class="container">
       <h1>災害情報</h1>
-      <p>ログインなしで、最近の災害、本日の支援先状況、最新のお知らせを確認できます。</p>
+      <p>
+        ログインなしで、最近の災害@if (config('public.show_support_status', false))、本日の支援先状況@endif、最新のお知らせを確認できます。
+      </p>
     </div>
   </div>
 
@@ -61,27 +63,29 @@
             </div>
           </div>
 
-          <div class="card card-outline card-info">
-            <div class="card-header">
-              <h2 class="card-title public-card-title">
-                <i class="fas fa-flag mr-2"></i>
-                本日の支援先状況
-              </h2>
-            </div>
-            <div class="card-body">
-              <div class="row text-center">
-                @foreach ($signalCounts as $signal)
-                  <div class="col-4">
-                    <div class="public-count text-{{ $signal['css_class'] }}">{{ $signal['count'] }}</div>
-                    <span class="badge badge-{{ $signal['css_class'] }}">{{ $signal['label'] }}</span>
-                  </div>
-                @endforeach
+          @if (config('public.show_support_status', false))
+            <div class="card card-outline card-info">
+              <div class="card-header">
+                <h2 class="card-title public-card-title">
+                  <i class="fas fa-flag mr-2"></i>
+                  本日の支援先状況
+                </h2>
               </div>
-              <p class="text-muted small mt-3 mb-0">
-                本日の日報に基づく支援先の状況です。詳細はログイン後に確認できます。
-              </p>
+              <div class="card-body">
+                <div class="row text-center">
+                  @foreach ($signalCounts as $signal)
+                    <div class="col-4">
+                      <div class="public-count text-{{ $signal['css_class'] }}">{{ $signal['count'] }}</div>
+                      <span class="badge badge-{{ $signal['css_class'] }}">{{ $signal['label'] }}</span>
+                    </div>
+                  @endforeach
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                  本日の日報に基づく支援先の状況です。詳細はログイン後に確認できます。
+                </p>
+              </div>
             </div>
-          </div>
+          @endif
 
         </div>
 

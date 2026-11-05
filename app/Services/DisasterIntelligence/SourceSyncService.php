@@ -85,6 +85,9 @@ class SourceSyncService
             $publishedAt = date(DATE_ATOM, strtotime($remoteModified));
         }
 
+        $credibility = $source['credibility_rank'] ?? $this->domainRank($url);
+        $credibilityReason = $source['credibility_reason'] ?? 'URLドメインから判定';
+
         ParseDisasterSourceJob::dispatch(
             $disasterId,
             $type,
@@ -92,10 +95,35 @@ class SourceSyncService
             $url,
             (string) ($source['source_org'] ?? '不明'),
             $publishedAt ? (string) $publishedAt : null,
-            isset($source['source_page']) ? (int) $source['source_page'] : null
+            isset($source['source_page']) ? (int) $source['source_page'] : null,
+            $credibility,
+            $credibilityReason
         );
 
         return $path;
+    }
+
+    /**
+     * 公式ドメインを基準に信頼度を判定する。
+     */
+    private function domainRank(string $url): string
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+        $host = preg_replace('/^www\./', '', $host) ?? $host;
+
+        if (str_ends_with($host, '.go.jp') || str_ends_with($host, '.lg.jp')) {
+            return 'A';
+        }
+
+        if (preg_match('/^(city|town|vill|pref)\./', $host) && str_ends_with($host, '.jp')) {
+            return 'A';
+        }
+
+        if (str_ends_with($host, '.or.jp') || in_array($host, ['jvoad.jp', 'kvoad.com'], true)) {
+            return 'B';
+        }
+
+        return 'C';
     }
 
     /**

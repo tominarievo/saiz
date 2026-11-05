@@ -53,7 +53,9 @@ class ParseDisasterSourceJob implements ShouldQueue
         public readonly string $sourceUrl,
         public readonly string $sourceOrg,
         public readonly ?string $sourcePublishedAt = null,
-        public readonly ?int $sourcePage = null
+        public readonly ?int $sourcePage = null,
+        public readonly ?string $sourceCredibility = null,
+        public readonly ?string $sourceCredibilityReason = null
     ) {
     }
 
@@ -65,6 +67,8 @@ class ParseDisasterSourceJob implements ShouldQueue
         DisasterSourceParser $parser,
         \App\Services\DisasterIntelligence\RoadRecoveryVerifier $recoveryVerifier
     ): void {
+        ini_set('memory_limit', '512M');
+
         $disaster = Disaster::find($this->disasterId);
 
         if (!$disaster) {
@@ -80,7 +84,19 @@ class ParseDisasterSourceJob implements ShouldQueue
 
         $absolutePath = $disk->path($this->filePath);
         $extension = strtolower(pathinfo($this->filePath, PATHINFO_EXTENSION));
-        $text = $extractor->extract($absolutePath, $extension);
+
+        try {
+            $text = $extractor->extract($absolutePath, $extension);
+        } catch (\Throwable $error) {
+            Log::warning('災害資料の本文抽出をスキップしました。', [
+                'disaster_id' => $this->disasterId,
+                'type' => $this->type,
+                'file' => $this->filePath,
+                'message' => $error->getMessage(),
+            ]);
+
+            return;
+        }
 
         if (trim($text) === '') {
             Log::warning('災害資料の本文が空です。', ['file' => $this->filePath]);
@@ -93,6 +109,8 @@ class ParseDisasterSourceJob implements ShouldQueue
             'source_published_at' => $this->sourcePublishedAt,
             'scraped_at' => now()->toDateTimeString(),
             'raw_file_path' => $this->filePath,
+            'source_credibility' => $this->sourceCredibility,
+            'source_credibility_reason' => $this->sourceCredibilityReason,
         ];
 
         $targetMunicipalities = $disaster->localGovernments()

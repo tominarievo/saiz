@@ -3,3 +3,4 @@ PATH=/home/saiz/.opencode/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:
 HOME=/home/saiz
 
 0 */3 * * * /home/saiz/work/saiz/harness/scripts/refresh-disaster-links.sh >> /home/saiz/work/saiz/storage/logs/disaster-links-cron.log 2>&1
+30 5 * * * /home/saiz/work/saiz/harness/scripts/discover-disaster-intelligence-sources.sh >> /home/saiz/work/saiz/storage/logs/disaster-intelligence-discovery-cron.log 2>&1

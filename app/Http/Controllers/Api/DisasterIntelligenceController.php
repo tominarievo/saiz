@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\MeetingInsight;
 use App\RoadRegulation;
 use App\Services\DisasterIntelligence\GeoJsonFormatter;
 use App\WasteSite;
@@ -65,30 +66,88 @@ class DisasterIntelligenceController extends Controller
             $query->where('disaster_id', (int) $request->input('disaster_id'));
         }
 
-        $sites = $query->orderBy('id')->get()->filter(function (WasteSite $site) use ($vehicle) {
-            if (!$site->entry_allowed) {
-                return false;
-            }
+        $sites = $query->orderByDesc('source_published_at')
+            ->orderByDesc('scraped_at')
+            ->orderByDesc('id')
+            ->get()
+            ->filter(function (WasteSite $site) use ($vehicle) {
+                if (!$site->entry_allowed) {
+                    return false;
+                }
 
-            if (!$vehicle) {
-                return true;
-            }
+                if (!$vehicle) {
+                    return true;
+                }
 
-            $limit = $site->max_payload_tons;
+                $limit = $site->max_payload_tons;
 
-            if ($limit === null) {
-                return true;
-            }
+                if ($limit === null) {
+                    return true;
+                }
 
-            return match ($vehicle) {
-                'light_truck', '2t' => $limit <= 2,
-                '4t' => $limit <= 4,
-                'large' => true,
-                default => false,
-            };
-        })->values();
+                return match ($vehicle) {
+                    'light_truck', '2t' => $limit <= 2,
+                    '4t' => $limit <= 4,
+                    'large' => true,
+                    default => false,
+                };
+            })
+            ->unique(fn (WasteSite $site) => preg_replace('/\s+/u', '', (string) $site->name))
+            ->values();
 
         return response()->json($this->geoJson->wasteSites($sites));
+    }
+
+    /**
+     * 議事録サマリを返す。
+     */
+    public function meetings(Request $request): JsonResponse
+    {
+        $query = MeetingInsight::query();
+
+        if ($request->filled('disaster_id')) {
+            $query->where('disaster_id', (int) $request->input('disaster_id'));
+        }
+
+        $meetings = $query->orderByDesc('held_at')
+            ->orderByDesc('source_published_at')
+            ->orderByDesc('scraped_at')
+            ->orderByDesc('id')
+            ->get()
+            ->filter(function (MeetingInsight $meeting) {
+                return !empty($meeting->decisions)
+                    || !empty($meeting->policy_changes)
+                    || !empty($meeting->unmet_needs);
+            })
+            ->unique(fn (MeetingInsight $meeting) => $meeting->held_at?->format('Y-m-d H:i:s') ?? 'undated-' . $meeting->id)
+            ->values()
+            ->map(function (MeetingInsight $meeting) {
+                return [
+                    'id' => $meeting->id,
+                    'meeting_name' => $meeting->meeting_name,
+                    'held_at' => $meeting->held_at?->toIso8601String(),
+                    'decisions' => $meeting->decisions ?? [],
+                    'policy_changes' => $meeting->policy_changes ?? [],
+                    'unmet_needs' => $meeting->unmet_needs ?? [],
+                    'source' => [
+                        'org' => $meeting->source_org,
+                        'url' => $meeting->source_url,
+                        'published_at' => $meeting->source_published_at?->toIso8601String(),
+                        'scraped_at' => $meeting->scraped_at?->toIso8601String(),
+                        'credibility' => $meeting->source_credibility,
+                        'credibility_reason' => $meeting->source_credibility_reason,
+                    ],
+                ];
+            });
+
+        return response()->json([
+            'meetings' => $meetings,
+            'meta' => [
+                'count' => $meetings->count(),
+                'generated_at' => now()->toIso8601String(),
+                'disclaimer' => config('disaster-intelligence.disclaimer'),
+            ],
+        ]);
     }
 
     /**

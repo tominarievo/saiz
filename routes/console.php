@@ -20,3 +20,5 @@ Artisan::command('inspire', function () {
 
 Schedule::command('disaster-intelligence:sync 1')->dailyAt('06:30')->withoutOverlapping();
 Schedule::command('disaster-intelligence:sync 5')->dailyAt('06:40')->withoutOverlapping();
+Schedule::command('disaster-intelligence:sync 6')->dailyAt('06:50')->withoutOverlapping();
+Schedule::command('disaster-intelligence:import-kumamoto-traffic')->everyThreeHours()->withoutOverlapping();

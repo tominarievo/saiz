@@ -27,6 +27,8 @@ class RoadRegulation extends Model
         'confidence_rank',
         'source_org',
         'source_url',
+        'source_credibility',
+        'source_credibility_reason',
         'source_published_at',
         'scraped_at',
         'raw_file_path',

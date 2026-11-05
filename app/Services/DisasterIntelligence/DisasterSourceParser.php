@@ -234,6 +234,8 @@ class DisasterSourceParser
             'source_published_at' => $this->nullableDate($attribution['source_published_at'] ?? null),
             'scraped_at' => $this->nullableDate($attribution['scraped_at'] ?? null),
             'raw_file_path' => $attribution['raw_file_path'] ?? null,
+            'source_credibility' => $attribution['source_credibility'] ?? null,
+            'source_credibility_reason' => $attribution['source_credibility_reason'] ?? null,
         ];
     }
 

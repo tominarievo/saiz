@@ -384,6 +384,68 @@
         maxWidth: '360px'
     });
 
+    const supportConditionsHtml = function (conditions) {
+        const labels = {
+            contact: '連絡先',
+            other_contact: 'その他連絡先',
+            fee_free: '料金',
+            id_verification: '本人確認',
+            permit_required: '許可申請',
+            reception_hours: '受付時間',
+            application_form: '申請書',
+            permit_form: '申請書',
+            sorting_requested: '分別',
+            business_waste_accepted: '事業系ごみ',
+            direct_dropoff_by_citizen: '市民直接搬入',
+            notes: '注意事項',
+            unloading: '搬入方法',
+            closure_conditions: '閉鎖条件',
+            required_documents: '必要書類',
+            advance_reservation_required: '事前予約',
+            advance_consultation_required_for_large_loads: '多量搬入の事前相談'
+        };
+        const booleans = {
+            fee_free: ['無料', '有料'],
+            id_verification: ['必要', '不要'],
+            permit_required: ['必要', '不要'],
+            sorting_requested: ['必要', '不要'],
+            business_waste_accepted: ['可', '不可'],
+            direct_dropoff_by_citizen: ['可', '不可'],
+            advance_reservation_required: ['必要', '不要'],
+            advance_consultation_required_for_large_loads: ['必要', '不要']
+        };
+        const entries = Object.entries(conditions || {}).filter(function (entry) {
+            return entry[1] !== null && entry[1] !== undefined && entry[1] !== '';
+        });
+
+        if (!entries.length) {
+            return '<div>不明</div>';
+        }
+
+        return entries.map(function (entry) {
+            const key = entry[0];
+            const value = entry[1];
+            let text;
+
+            if (typeof value === 'boolean') {
+                const pair = booleans[key] || ['あり', 'なし'];
+                text = value ? pair[0] : pair[1];
+            } else if (Array.isArray(value)) {
+                text = value.join('、');
+            } else if (typeof value === 'object') {
+                text = JSON.stringify(value);
+            } else {
+                text = String(value);
+            }
+
+            return '<div><strong>' + escapeHtml(labels[key] || key) + ':</strong> ' + escapeHtml(text) + '</div>';
+        }).join('');
+    };
+
+    const wasteStatusLabel = function (status) {
+        return { open: '開設中', closed: '閉鎖' }[status] || '不明';
+    };
+
     const sourceInfo = function (properties) {
         const source = properties.source || {};
 
@@ -392,6 +454,8 @@
             + (source.url ? '<br><a href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener noreferrer">一次資料を開く</a>' : '')
             + (source.published_at ? '<br>公表日時: ' + escapeHtml(formatDate(source.published_at)) : '')
             + (source.scraped_at ? '<br>取得日時: ' + escapeHtml(formatDate(source.scraped_at)) : '')
+            + (source.credibility ? '<br>出典信頼度: ' + escapeHtml(source.credibility) : '')
+          + (source.credibility_reason ? '<br>判定理由: ' + escapeHtml(source.credibility_reason) : '')
             + '</div>';
     };
 
@@ -709,11 +773,11 @@
                 const feature = event.features[0];
                 const properties = feature.properties || {};
                 const conditions = properties.support_conditions || {};
-                const body = '<div>状態: ' + escapeHtml(properties.status || 'unknown') + '</div>'
+                const body = '<div>状態: ' + escapeHtml(wasteStatusLabel(properties.status)) + '</div>'
                     + '<div>受入品目: ' + escapeHtml((properties.accepted_items || []).join('、') || '不明') + '</div>'
                     + '<div>受入不可: ' + escapeHtml((properties.rejected_items || []).join('、') || '不明') + '</div>'
                     + '<div>車両制限: ' + escapeHtml(properties.vehicle_limit || (properties.max_payload_tons ? properties.max_payload_tons + 'tまで' : '不明')) + '</div>'
-                    + '<div>搬入条件: ' + escapeHtml(JSON.stringify(conditions)) + '</div>';
+                    + '<div><strong>搬入条件:</strong></div>' + supportConditionsHtml(conditions);
                 popup.setLngLat(event.lngLat).setHTML(popupHtml(properties.name || '仮置場', body, properties)).addTo(map);
             });
 

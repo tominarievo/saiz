@@ -136,6 +136,8 @@ class GeoJsonFormatter
             'published_at' => $model->source_published_at?->toIso8601String(),
             'scraped_at' => $model->scraped_at?->toIso8601String(),
             'raw_file_path' => $model->raw_file_path,
+            'credibility' => $model->source_credibility,
+            'credibility_reason' => $model->source_credibility_reason,
         ];
     }
 }

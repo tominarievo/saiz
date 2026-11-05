@@ -4,10 +4,17 @@ const XLSX = require('xlsx');
 
 const TAKAOKA_SUMMARY_URL = 'https://www.city.takaoka.toyama.jp/material/files/group/4/R080930.xlsx';
 const ESTAT_AGE_URL = 'https://www.e-stat.go.jp/stat-search/file-download?statInfId=000032142410&fileKind=0';
-const ESTAT_SMALL_AREA_URLS = {
-  16: 'https://www.e-stat.go.jp/stat-search/file-download?statInfId=000032163320&fileKind=1',
-  12: 'https://www.e-stat.go.jp/stat-search/file-download?statInfId=000032163260&fileKind=1',
+const ESTAT_SMALL_AREA_IDS = {
+  16: '000032163320',
+  12: '000032163260',
+  43: '000032163725',
 };
+const ESTAT_SMALL_AREA_URLS = Object.fromEntries(
+  Object.entries(ESTAT_SMALL_AREA_IDS).map(([code, statInfId]) => [
+    code,
+    `https://www.e-stat.go.jp/stat-search/file-download?statInfId=${statInfId}&fileKind=1`,
+  ])
+);
 const OUTPUT_DIR = process.argv[2] || '\\\\wsl.localhost\\Ubuntu\\home\\saiz\\work\\saiz\\storage\\app\\population';
 
 const MUNICIPALITIES = require('./municipalities');
@@ -327,7 +334,7 @@ async function main() {
 
     if (code === '16202') {
       summary = takaokaSummary;
-    } else if (municipality.prefectureCode === '12') {
+    } else if (['12', '43'].includes(municipality.prefectureCode)) {
       summary = buildCensusSummary(
         ageGroups[code],
         loadHouseholds(municipality.prefectureCode, code)
@@ -356,7 +363,7 @@ async function main() {
         as_of: '2020-10-01',
         source: {
           name: '令和2年国勢調査 小地域集計（町丁・字等）',
-          url: 'https://www.e-stat.go.jp/stat-search/files?stat_infid=000032163320',
+          url: `https://www.e-stat.go.jp/stat-search/files?stat_infid=${ESTAT_SMALL_AREA_IDS[municipality.prefectureCode]}`,
         },
         items: smallAreas[code],
       },

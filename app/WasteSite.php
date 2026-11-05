@@ -31,6 +31,8 @@ class WasteSite extends Model
         'support_conditions',
         'source_org',
         'source_url',
+        'source_credibility',
+        'source_credibility_reason',
         'source_published_at',
         'scraped_at',
         'raw_file_path',

@@ -557,6 +557,51 @@
       line-height: 1.4;
     }
 
+    .support-meeting {
+      padding: 0.65rem 0.7rem;
+      border: 1px solid #e9ecef;
+      border-radius: 0.4rem;
+      background: #fff;
+    }
+
+    .support-meeting-title {
+      display: block;
+      color: #1f3c88;
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .support-meeting-block {
+      margin-top: 0.45rem;
+      font-size: 0.74rem;
+      line-height: 1.45;
+    }
+
+    .support-meeting-block strong {
+      display: block;
+      margin-bottom: 0.1rem;
+      color: #495057;
+    }
+
+    .support-meeting-block ul {
+      margin: 0;
+      padding-left: 1.1rem;
+    }
+
+    .support-meeting-block li + li {
+      margin-top: 0.1rem;
+    }
+
+    .support-meeting-source {
+      margin-top: 0.45rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid #f1f3f5;
+      color: #6c757d;
+      font-size: 0.7rem;
+      line-height: 1.45;
+    }
+
     .population-municipality + .population-municipality {
       margin-top: 1.25rem;
       padding-top: 1rem;
@@ -1018,6 +1063,16 @@
                 <p class="support-empty">仮置場情報を読み込んでいます...</p>
               </div>
             </div>
+
+            <div>
+              <div class="support-section-header">
+                <strong>議事録サマリ</strong>
+                <span id="support-meeting-count">読み込み中...</span>
+              </div>
+              <div id="support-meeting-list" class="support-list">
+                <p class="support-empty">議事録を読み込んでいます...</p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -1320,6 +1375,7 @@
       const volunteerCenterUrl = @json(route('disasters.volunteer_centers', ['disaster' => $disaster->id]));
       const roadRegulationUrl = @json(url('/api/v1/disaster/roads'));
       const wasteSiteUrl = @json(url('/api/v1/disaster/waste-sites'));
+      const meetingSummaryUrl = @json(url('/api/v1/disaster/meetings'));
       const mapElement = document.getElementById('disaster-map');
 
       if (!mapElement) {
@@ -2155,6 +2211,7 @@
 
       const supportRoadFeatures = [];
       const supportWasteFeatures = [];
+      const supportMeetingItems = [];
       const supportRoadLayers = new Map();
       const supportWasteLayers = new Map();
 
@@ -2192,6 +2249,8 @@
           + '出典: ' + escapeHtml(source.org || '不明')
           + (url.startsWith('http') ? '<br><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">一次資料を開く</a>' : '')
           + (source.published_at ? '<br>公表: ' + escapeHtml(new Date(source.published_at).toLocaleString('ja-JP')) : '')
+          + (source.credibility ? '<br>出典信頼度: ' + escapeHtml(source.credibility) : '')
+          + (source.credibility_reason ? '<br>判定理由: ' + escapeHtml(source.credibility_reason) : '')
           + '</div>';
       }
 
@@ -2219,6 +2278,64 @@
         }[status] || { label: '不明', color: '#0d6efd' };
       }
 
+      function supportConditionsHtml(conditions) {
+        const labels = {
+          contact: '連絡先',
+          other_contact: 'その他連絡先',
+          fee_free: '料金',
+          id_verification: '本人確認',
+          permit_required: '許可申請',
+          reception_hours: '受付時間',
+          application_form: '申請書',
+          permit_form: '申請書',
+          sorting_requested: '分別',
+          business_waste_accepted: '事業系ごみ',
+          direct_dropoff_by_citizen: '市民直接搬入',
+          notes: '注意事項',
+          unloading: '搬入方法',
+          closure_conditions: '閉鎖条件',
+          required_documents: '必要書類',
+          advance_reservation_required: '事前予約',
+          advance_consultation_required_for_large_loads: '多量搬入の事前相談'
+        };
+        const booleans = {
+          fee_free: ['無料', '有料'],
+          id_verification: ['必要', '不要'],
+          permit_required: ['必要', '不要'],
+          sorting_requested: ['必要', '不要'],
+          business_waste_accepted: ['可', '不可'],
+          direct_dropoff_by_citizen: ['可', '不可'],
+          advance_reservation_required: ['必要', '不要'],
+          advance_consultation_required_for_large_loads: ['必要', '不要']
+        };
+        const entries = Object.entries(conditions || {}).filter(function (entry) {
+          return entry[1] !== null && entry[1] !== undefined && entry[1] !== '';
+        });
+
+        if (!entries.length) {
+          return '<div class="support-item-meta">不明</div>';
+        }
+
+        return entries.map(function (entry) {
+          const key = entry[0];
+          const value = entry[1];
+          let text;
+
+          if (typeof value === 'boolean') {
+            const pair = booleans[key] || ['あり', 'なし'];
+            text = value ? pair[0] : pair[1];
+          } else if (Array.isArray(value)) {
+            text = value.join('、');
+          } else if (typeof value === 'object') {
+            text = JSON.stringify(value);
+          } else {
+            text = String(value);
+          }
+
+          return '<div><strong>' + escapeHtml(labels[key] || key) + ':</strong> ' + escapeHtml(text) + '</div>';
+        }).join('');
+      }
+
       function wastePopup(properties) {
         const meta = wasteStatusMeta(properties.status);
         const root = document.createElement('div');
@@ -2228,7 +2345,7 @@
           + '<div><strong>受入品目:</strong> ' + escapeHtml((properties.accepted_items || []).join('、') || '不明') + '</div>'
           + '<div><strong>受入不可:</strong> ' + escapeHtml((properties.rejected_items || []).join('、') || '不明') + '</div>'
           + '<div><strong>車両制限:</strong> ' + escapeHtml(properties.vehicle_limit || (properties.max_payload_tons ? properties.max_payload_tons + 'tまで' : '不明')) + '</div>'
-          + '<div><strong>搬入条件:</strong> ' + escapeHtml(JSON.stringify(properties.support_conditions || {})) + '</div>'
+          + '<div><strong>搬入条件:</strong></div>' + supportConditionsHtml(properties.support_conditions || {})
           + sourceHtml(properties)
           + '<div class="support-item-meta" style="color:#b02a37;margin-top:0.35rem;">' + escapeHtml(properties.disclaimer || '出典の一次情報を確認してください。') + '</div>';
 
@@ -2330,6 +2447,63 @@
         });
       }
 
+      function meetingItemsHtml(items) {
+        if (!Array.isArray(items) || items.length === 0) {
+          return '';
+        }
+
+        return '<ul>' + items.map(function (item) {
+          return '<li>' + escapeHtml(String(item)) + '</li>';
+        }).join('') + '</ul>';
+      }
+
+      function meetingBlock(label, items) {
+        const html = meetingItemsHtml(items);
+
+        if (!html) {
+          return '';
+        }
+
+        return '<div class="support-meeting-block"><strong>' + escapeHtml(label) + '</strong>' + html + '</div>';
+      }
+
+      function renderSupportMeetingList() {
+        const list = document.getElementById('support-meeting-list');
+        const count = document.getElementById('support-meeting-count');
+
+        if (!list) {
+          return;
+        }
+
+        if (count) {
+          count.textContent = supportMeetingItems.length + '件';
+        }
+
+        if (supportMeetingItems.length === 0) {
+          list.innerHTML = '<p class="support-empty">議事録は登録されていません。</p>';
+          return;
+        }
+
+        list.innerHTML = supportMeetingItems.map(function (meeting) {
+          const source = meeting.source || {};
+          const heldAt = meeting.held_at ? new Date(meeting.held_at).toLocaleString('ja-JP') : '日時不明';
+          const blocks = meetingBlock('決定事項', meeting.decisions)
+            + meetingBlock('方針転換・撤収予定', meeting.policy_changes)
+            + meetingBlock('未充足ニーズ・支援の空白', meeting.unmet_needs);
+
+          return '<article class="support-meeting">'
+            + '<span class="support-meeting-title">' + escapeHtml(meeting.meeting_name || '会議名不明') + '</span>'
+            + '<span class="support-item-meta">' + escapeHtml(heldAt) + (source.org ? ' / ' + escapeHtml(source.org) : '') + '</span>'
+            + (blocks || '<div class="support-item-meta">抽出された決定事項・ニーズはありません。</div>')
+            + '<div class="support-meeting-source">出典: ' + escapeHtml(source.org || '不明')
+            + (source.url ? '<br><a href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener noreferrer">一次資料を開く</a>' : '')
+            + (source.credibility ? '<br>出典信頼度: ' + escapeHtml(source.credibility) : '')
+            + (source.credibility_reason ? '<br>判定理由: ' + escapeHtml(source.credibility_reason) : '')
+            + '</div>'
+            + '</article>';
+        }).join('');
+      }
+
       function updateSupportTabCount() {
         const badge = document.getElementById('support-tab-count');
 
@@ -2337,7 +2511,7 @@
           return;
         }
 
-        const total = supportRoadFeatures.length + supportWasteFeatures.length;
+        const total = supportRoadFeatures.length + supportWasteFeatures.length + supportMeetingItems.length;
         badge.textContent = String(total);
         badge.hidden = total === 0;
       }
@@ -2488,9 +2662,54 @@
         return layerLoads.waste_sites;
       }
 
+      function loadMeetingSummaries() {
+        if (supportMeetingItems.length > 0) {
+          return Promise.resolve();
+        }
+
+        if (layerLoads.meetings) {
+          return layerLoads.meetings;
+        }
+
+        const list = document.getElementById('support-meeting-list');
+
+        layerLoads.meetings = fetch(meetingSummaryUrl + '?disaster_id=' + encodeURIComponent(@json($disaster->id)), {
+          headers: { 'Accept': 'application/json' }
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error(response.status);
+            }
+            return response.json();
+          })
+          .then(function (data) {
+            supportMeetingItems.length = 0;
+            (data.meetings || []).forEach(function (meeting) {
+              supportMeetingItems.push(meeting);
+            });
+            renderSupportMeetingList();
+            updateSupportTabCount();
+          })
+          .catch(function () {
+            if (list) {
+              list.innerHTML = '<p class="support-empty">議事録を取得できませんでした。</p>';
+            }
+            const count = document.getElementById('support-meeting-count');
+            if (count) {
+              count.textContent = '取得失敗';
+            }
+          })
+          .finally(function () {
+            layerLoads.meetings = null;
+          });
+
+        return layerLoads.meetings;
+      }
+
       function loadSupportPanelData() {
         loadRoadLayer();
         loadWasteSiteLayer();
+        loadMeetingSummaries();
       }
 
       function loadSmallAreaLayer() {

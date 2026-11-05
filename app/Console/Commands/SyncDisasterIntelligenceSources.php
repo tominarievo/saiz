@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Disaster;
+use App\DisasterIntelligenceSource;
 use App\Services\DisasterIntelligence\SourceSyncService;
 use Illuminate\Console\Command;
 use Throwable;
@@ -44,6 +45,27 @@ class SyncDisasterIntelligenceSources extends Command
         }
 
         $sources = config('disaster-intelligence.sources.' . $disaster->id, []);
+
+        $discoveredSources = DisasterIntelligenceSource::where('disaster_id', $disaster->id)
+            ->where('status', 'active')
+            ->get()
+            ->map(function (DisasterIntelligenceSource $source) {
+                return [
+                    'type' => $source->type,
+                    'url' => $source->url,
+                    'source_org' => $source->source_org,
+                    'published_at' => $source->published_at?->toIso8601String(),
+                    'credibility_rank' => $source->credibility_rank,
+                    'credibility_reason' => $source->credibility_reason,
+                ];
+            })
+            ->all();
+
+        $sources = collect(array_merge($sources, $discoveredSources))
+            ->keyBy(fn ($source) => ($source['type'] ?? '') . '|' . ($source['url'] ?? ''))
+            ->values()
+            ->all();
+
         $url = $this->option('url');
 
         if ($url) {
@@ -84,6 +106,10 @@ class SyncDisasterIntelligenceSources extends Command
 
             try {
                 $path = $syncService->sync($disaster->id, $source, (bool) $this->option('force'));
+
+                DisasterIntelligenceSource::where('disaster_id', $disaster->id)
+                    ->where('url_hash', sha1($url))
+                    ->update(['last_synced_at' => now()]);
 
                 if ($path === null) {
                     $this->line('更新なし: ' . $url);

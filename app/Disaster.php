@@ -116,4 +116,14 @@ class Disaster extends Model
     {
         return $this->hasMany(MeetingInsight::class);
     }
+
+    /**
+     * AIが探索した情報収集元
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function intelligenceSources()
+    {
+        return $this->hasMany(DisasterIntelligenceSource::class);
+    }
 }

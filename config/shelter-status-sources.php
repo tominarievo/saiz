@@ -7,6 +7,13 @@ $chibaPortal = [
     ],
 ];
 
+$kumamotoPortal = [
+    [
+        'name' => '防災情報くまもと 避難所情報',
+        'url' => 'https://portal.bousai.pref.kumamoto.jp/?p=evacuation%2Fshelter',
+    ],
+];
+
 return [
     '162027' => [
         'name' => '高岡市',
@@ -70,4 +77,33 @@ return [
     '12403' => ['name' => '九十九里町', 'collector' => 'chiba_portal', 'sources' => $chibaPortal],
     '12424' => ['name' => '白子町', 'collector' => 'chiba_portal', 'sources' => $chibaPortal],
     '12426' => ['name' => '長柄町', 'collector' => 'chiba_portal', 'sources' => $chibaPortal],
+    '43100' => ['name' => '熊本市', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43202' => [
+        'name' => '八代市',
+        'collector' => 'kumamoto_portal',
+        'aliases' => [
+            '桜十字ホールやつしろ（ハーモニーホール）' => '桜十字ホールやつしろ（やつしろハーモニーホール）',
+            '鏡中学校' => '八代市立鏡中学校',
+            '鏡小学校' => '八代市立鏡小学校',
+        ],
+        'sources' => $kumamotoPortal,
+    ],
+    '43205' => ['name' => '水俣市', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43208' => ['name' => '山鹿市', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43210' => ['name' => '菊池市', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43211' => ['name' => '宇土市', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43212' => ['name' => '上天草市', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43213' => ['name' => '宇城市', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43215' => ['name' => '天草市', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43216' => ['name' => '合志市', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43403' => ['name' => '大津町', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43404' => ['name' => '菊陽町', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43432' => ['name' => '西原村', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43441' => ['name' => '御船町', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43442' => ['name' => '嘉島町', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43443' => ['name' => '益城町', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43444' => ['name' => '甲佐町', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43468' => ['name' => '氷川町', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43482' => ['name' => '芦北町', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
+    '43484' => ['name' => '津奈木町', 'collector' => 'kumamoto_portal', 'sources' => $kumamotoPortal],
 ];

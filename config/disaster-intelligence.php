@@ -112,7 +112,27 @@ return [
     |
     */
 
+    'traffic_feeds' => [
+        6 => [
+            'url' => 'https://portal.bousai.pref.kumamoto.jp/data/traffic/traffic.json',
+            'source_page' => 'https://portal.bousai.pref.kumamoto.jp/?p=traffic',
+            'source_org' => '熊本県 防災情報くまもと',
+        ],
+    ],
+
     'recovery_sources' => [
+        6 => [
+            [
+                'name' => '国土交通省 令和8年熊本地震 道路対応状況',
+                'url' => 'https://www.mlit.go.jp/road/road_fr4_000201.html',
+                'source_org' => '国土交通省',
+            ],
+            [
+                'name' => '熊本県 防災情報くまもと 通行規制',
+                'url' => 'https://portal.bousai.pref.kumamoto.jp/?p=traffic',
+                'source_org' => '熊本県',
+            ],
+        ],
         5 => [
             [
                 'name' => '千葉市 幹線道路の通行規制',
@@ -140,5 +160,5 @@ return [
         'large' => '大型回送車',
     ],
 
-    'disclaimer' => '本データにはAI抽出（信頼度C）が含まれます。必ず出典の一次情報を確認してください。',
+    'disclaimer' => '本データはAIによる抽出を含みます。必ず出典の一次情報を確認してください。',
 ];
