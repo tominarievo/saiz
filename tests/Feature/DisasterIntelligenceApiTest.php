@@ -318,11 +318,12 @@ class DisasterIntelligenceApiTest extends TestCase
     public function test_meetings_api_returns_summary_and_deduplicates_by_held_at(): void
     {
         $disaster = $this->createDisaster();
+        $heldAt = now()->subDay();
 
         MeetingInsight::create([
             'disaster_id' => $disaster->id,
             'meeting_name' => '古い会議名',
-            'held_at' => now()->subDay(),
+            'held_at' => $heldAt,
             'decisions' => ['古い決定'],
             'source_org' => '古い県',
             'source_url' => 'https://example.test/old-meeting.pdf',
@@ -333,7 +334,7 @@ class DisasterIntelligenceApiTest extends TestCase
         MeetingInsight::create([
             'disaster_id' => $disaster->id,
             'meeting_name' => '最新の会議名',
-            'held_at' => now()->subDay(),
+            'held_at' => $heldAt,
             'decisions' => ['新しい決定'],
             'policy_changes' => ['撤収予定'],
             'unmet_needs' => ['重機不足'],
@@ -348,7 +349,7 @@ class DisasterIntelligenceApiTest extends TestCase
         MeetingInsight::create([
             'disaster_id' => $disaster->id,
             'meeting_name' => '内容なしの最新会議',
-            'held_at' => now()->subDay(),
+            'held_at' => $heldAt,
             'source_org' => '空の県',
             'source_url' => 'https://example.test/empty-meeting.pdf',
             'source_published_at' => now()->addMinute(),
