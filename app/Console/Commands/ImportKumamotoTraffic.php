@@ -4,10 +4,10 @@ namespace App\Console\Commands;
 
 use App\Disaster;
 use App\RoadRegulation;
+use App\Services\DisasterIntelligence\SourceHttpClient;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 
 class ImportKumamotoTraffic extends Command
 {
@@ -29,7 +29,7 @@ class ImportKumamotoTraffic extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(SourceHttpClient $http): int
     {
         $disaster = Disaster::find($this->argument('disaster'));
 
@@ -46,7 +46,7 @@ class ImportKumamotoTraffic extends Command
         }
 
         try {
-            $response = Http::timeout(60)->get((string) $feed['url'])->throw();
+            $response = $http->get((string) $feed['url'])->throw();
         } catch (\Throwable $error) {
             $this->error('交通規制JSONの取得に失敗しました: ' . $error->getMessage());
             return self::FAILURE;

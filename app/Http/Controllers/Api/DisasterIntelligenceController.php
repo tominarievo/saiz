@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\MeetingInsight;
 use App\RoadRegulation;
 use App\Services\DisasterIntelligence\GeoJsonFormatter;
+use App\Services\DisasterIntelligence\MeetingRelevanceFilter;
+use App\Support\SourceLicense;
 use App\WasteSite;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,6 +33,14 @@ class DisasterIntelligenceController extends Controller
         }
 
         $query = RoadRegulation::query();
+
+        $statuses = ['closed', 'partial'];
+
+        if ($request->boolean('include_open')) {
+            $statuses[] = 'open';
+        }
+
+        $query->whereIn('status', $statuses);
 
         if ($request->filled('disaster_id')) {
             $query->where('disaster_id', (int) $request->input('disaster_id'));
@@ -61,6 +71,10 @@ class DisasterIntelligenceController extends Controller
         }
 
         $query = WasteSite::query();
+
+        if (!$request->boolean('include_closed')) {
+            $query->whereIn('status', ['open', 'unknown']);
+        }
 
         if ($request->filled('disaster_id')) {
             $query->where('disaster_id', (int) $request->input('disaster_id'));
@@ -101,7 +115,7 @@ class DisasterIntelligenceController extends Controller
     /**
      * 議事録サマリを返す。
      */
-    public function meetings(Request $request): JsonResponse
+    public function meetings(Request $request, MeetingRelevanceFilter $relevance): JsonResponse
     {
         $query = MeetingInsight::query();
 
@@ -119,9 +133,21 @@ class DisasterIntelligenceController extends Controller
                     || !empty($meeting->policy_changes)
                     || !empty($meeting->unmet_needs);
             })
+            ->filter(function (MeetingInsight $meeting) use ($relevance) {
+                return $relevance->isRelevant((int) $meeting->disaster_id, implode("\n", [
+                    (string) $meeting->meeting_name,
+                    (string) $meeting->source_org,
+                    implode(' ', (array) ($meeting->decisions ?? [])),
+                    implode(' ', (array) ($meeting->policy_changes ?? [])),
+                    implode(' ', (array) ($meeting->unmet_needs ?? [])),
+                ]));
+            })
             ->unique(fn (MeetingInsight $meeting) => $meeting->held_at?->format('Y-m-d H:i:s') ?? 'undated-' . $meeting->id)
             ->values()
             ->map(function (MeetingInsight $meeting) {
+                $metadata = is_array($meeting->metadata) ? $meeting->metadata : [];
+                $citationUrl = is_string($metadata['citation_url'] ?? null) ? $metadata['citation_url'] : null;
+
                 return [
                     'id' => $meeting->id,
                     'meeting_name' => $meeting->meeting_name,
@@ -131,11 +157,14 @@ class DisasterIntelligenceController extends Controller
                     'unmet_needs' => $meeting->unmet_needs ?? [],
                     'source' => [
                         'org' => $meeting->source_org,
-                        'url' => $meeting->source_url,
+                        'url' => $citationUrl ?: $meeting->source_url,
+                        'citation_url' => $citationUrl,
+                        'retrieval_url' => $meeting->source_url,
                         'published_at' => $meeting->source_published_at?->toIso8601String(),
                         'scraped_at' => $meeting->scraped_at?->toIso8601String(),
                         'credibility' => $meeting->source_credibility,
                         'credibility_reason' => $meeting->source_credibility_reason,
+                        'license' => SourceLicense::forUrl($citationUrl ?: $meeting->source_url),
                     ],
                 ];
             });

@@ -1,0 +1,10 @@
+/var/data/git/saiz/storage/logs/*.log {
+    daily
+    missingok
+    rotate 14
+    compress
+    delaycompress
+    notifempty
+    copytruncate
+    su www-data www-data
+}

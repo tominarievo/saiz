@@ -20,10 +20,12 @@ class DisasterSourceParser
     /**
      * @param PromptRepository $prompts
      * @param LlmJsonClient $llm
+     * @param SourceTextRedactor $redactor
      */
     public function __construct(
         private readonly PromptRepository $prompts,
-        private readonly LlmJsonClient $llm
+        private readonly LlmJsonClient $llm,
+        private readonly SourceTextRedactor $redactor
     ) {
     }
 
@@ -41,6 +43,12 @@ class DisasterSourceParser
             throw new \InvalidArgumentException('未対応の資料種別です: ' . $type);
         }
 
+        $shouldRedact = $type !== 'roads';
+
+        if ($shouldRedact) {
+            $text = $this->redactor->redact($text);
+        }
+
         $prompt = $this->prompts->render(self::PROMPTS[$type], [
             'SOURCE_ORG' => $attribution['source_org'] ?? '',
             'SOURCE_URL' => $attribution['source_url'] ?? '',
@@ -53,6 +61,10 @@ class DisasterSourceParser
 
         try {
             $payload = $this->llm->completeJson($prompt);
+
+            if ($shouldRedact) {
+                $payload = $this->redactor->redactArray($payload);
+            }
         } catch (Throwable $error) {
             Log::warning('災害資料のAIパースをスキップしました。', [
                 'type' => $type,
@@ -158,10 +170,6 @@ class DisasterSourceParser
             $latitude = $this->nullableFloat($item['latitude'] ?? null);
             $longitude = $this->nullableFloat($item['longitude'] ?? null);
             $geometry = $this->normalizeGeometry($item['geometry'] ?? null, $latitude, $longitude, 'Point');
-
-            if ($geometry === null) {
-                continue;
-            }
 
             $sites[] = array_merge([
                 'name' => mb_substr($name, 0, 255),

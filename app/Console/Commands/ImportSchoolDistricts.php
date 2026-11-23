@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Services\DisasterIntelligence\RobotsTxt;
+use App\Services\DisasterIntelligence\SourceUrlGuard;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -42,7 +44,7 @@ class ImportSchoolDistricts extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(SourceUrlGuard $guard, RobotsTxt $robots)
     {
         $prefecture = str_pad((string) $this->argument('prefecture'), 2, '0', STR_PAD_LEFT);
 
@@ -84,8 +86,16 @@ class ImportSchoolDistricts extends Command
                     $this->info("{$code} {$prefecture}: ローカルZIPを使用します。");
                     File::copy($sourceZip, $zipPath);
                 } else {
+                    $userAgent = (string) config('disaster-intelligence.crawler.user_agent', 'SaizBot/1.0');
+                    $guard->assertAllowed($url);
+
+                    if (!$robots->isAllowed($url)) {
+                        throw new \RuntimeException('robots.txtで取得が禁止されています: ' . $url);
+                    }
+
                     try {
-                        $response = Http::timeout(600)
+                        $response = Http::withHeaders(['User-Agent' => $userAgent])
+                            ->timeout(600)
                             ->withOptions(['sink' => $zipPath])
                             ->get($url);
 
@@ -101,6 +111,8 @@ class ImportSchoolDistricts extends Command
                             '--show-error',
                             '--max-time',
                             '600',
+                            '-A',
+                            $userAgent,
                             '-o',
                             $zipPath,
                             $url,

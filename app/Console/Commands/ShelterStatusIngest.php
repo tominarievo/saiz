@@ -2,8 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Disaster;
 use App\EvacuationShelter;
 use App\LocalGovernment;
+use App\Services\DisasterDataSource\DisasterDataSourceRecorder;
+use App\Support\DisasterDataSourceCategory;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -102,6 +105,25 @@ class ShelterStatusIngest extends Command
         }
 
         $now = now();
+
+        $disasterIds = Disaster::whereHas('localGovernments', function ($query) use ($localGovernmentIds) {
+            $query->whereIn('local_governments.id', $localGovernmentIds);
+        })->pluck('id');
+
+        $recorder = app(DisasterDataSourceRecorder::class);
+
+        foreach ($disasterIds as $disasterId) {
+            $recorder->record(
+                (int) $disasterId,
+                DisasterDataSourceCategory::EVACUATION_SHELTERS,
+                $sourceName,
+                $sourceUrl,
+                '避難所開設状況',
+                $now,
+                null,
+                ['status' => $status, 'admin_code' => $adminCode]
+            );
+        }
 
         if ($status === 'unknown') {
             foreach ($shelters as $shelter) {

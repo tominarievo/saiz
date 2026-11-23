@@ -11,7 +11,6 @@ use App\Shelter;
 use App\SupportCategory1;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
@@ -24,6 +23,19 @@ use SplFileObject;
 class ShelterController extends Controller
 {
     const DEFAULT_SUPPORT_DAY = 3;
+
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $adminOnlyMethods = ['create', 'store', 'edit', 'update', 'destroy'];
+
+            if (in_array($request->route()->getActionMethod(), $adminOnlyMethods, true)) {
+                $this->authorizeAdmin();
+            }
+
+            return $next($request);
+        });
+    }
 
     /**
      * 支援先一覧を表示する
@@ -350,8 +362,6 @@ class ShelterController extends Controller
      */
     public function edit(Request $request, Shelter $shelter)
     {
-        $this->authorizeShelterUpdate($shelter);
-
         // 日報入力から来た場合にのみ値がある。
         View::share("from", null);
 
@@ -369,8 +379,6 @@ class ShelterController extends Controller
      */
     public function update(ShelterRequest $request, Shelter $shelter)
     {
-        $this->authorizeShelterUpdate($shelter);
-
         $shelter->name            = $request->input('name');
         $shelter->status          = filled($request->input('status')) ?: false;
         $shelter->is_designated   = filled($request->input('is_designated')) ?: false;
@@ -416,8 +424,6 @@ class ShelterController extends Controller
      */
     public function destroy(ShelterRequest $request, Shelter $shelter)
     {
-        $this->authorizeAdmin();
-
 //        TODO ユーザーや情報があれば削除不可にする。
 
         $shelter->delete();
@@ -427,21 +433,6 @@ class ShelterController extends Controller
         return redirect(route('shelters.index'));
     }
 
-
-    private function authorizeShelterUpdate(Shelter $shelter): void
-    {
-        $user = Auth::user();
-
-        if ($user->isAdmin()) {
-            return;
-        }
-
-        $allowed = $shelter->organizations()
-            ->where('organizations.id', $user->organization_id)
-            ->exists();
-
-        abort_unless($allowed, 403);
-    }
 
     private function downloadCsv($query)
     {

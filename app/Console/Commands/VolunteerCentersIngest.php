@@ -2,6 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Disaster;
+use App\Services\DisasterDataSource\DisasterDataSourceRecorder;
+use App\Support\DisasterDataSourceCategory;
 use App\VolunteerCenter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
@@ -9,8 +12,6 @@ use Illuminate\Support\Facades\File;
 class VolunteerCentersIngest extends Command
 {
     /**
-     * コマンド名
-     *
      * @var string
      */
     protected $signature = 'volunteer-centers:ingest
@@ -19,18 +20,11 @@ class VolunteerCentersIngest extends Command
                             {--json= : 募集情報JSONを直接指定する}';
 
     /**
-     * コマンド説明
-     *
      * @var string
      */
-    protected $description = 'AIが取得したボランティア募集情報をセンターに登録する';
+    protected $description = 'AIが取得したボランティア募集情報と開設状況をセンターに登録する';
 
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
-    public function handle()
+    public function handle(): int
     {
         $center = VolunteerCenter::find($this->argument('center'));
 
@@ -66,8 +60,18 @@ class VolunteerCentersIngest extends Command
         $title = trim((string) ($data['title'] ?? ''));
         $summary = trim((string) ($data['summary'] ?? ''));
         $url = trim((string) ($data['url'] ?? ''));
+        $status = strtolower(trim((string) ($data['status'] ?? 'unknown')));
+        $statusNote = trim((string) ($data['status_note'] ?? ''));
 
-        if ($title === '' && $summary === '') {
+        if (!in_array($status, ['open', 'closed', 'unknown'], true)) {
+            $status = 'unknown';
+        }
+
+        if ($statusNote !== '') {
+            $statusNote = mb_substr($statusNote, 0, 1000);
+        }
+
+        if ($title === '' && $summary === '' && $status === 'unknown') {
             $this->error('募集情報が空です。');
             return self::FAILURE;
         }
@@ -80,10 +84,31 @@ class VolunteerCentersIngest extends Command
             $url = '';
         }
 
-        $center->latest_recruitment_title = $title !== '' ? $title : null;
-        $center->latest_recruitment_summary = $summary !== '' ? $summary : null;
+        if ($status === 'closed') {
+            $center->latest_recruitment_title = $title !== '' ? $title : '募集終了';
+            $center->latest_recruitment_summary = $summary !== ''
+                ? $summary
+                : 'ボランティアセンターの閉所・活動終了が確認されました。';
+        } else {
+            $center->latest_recruitment_title = $title !== '' ? $title : null;
+            $center->latest_recruitment_summary = $summary !== '' ? $summary : null;
+        }
+
         $center->latest_recruitment_url = $url !== '' ? $url : null;
         $center->recruitment_updated_at = now();
+
+        if ($status !== 'unknown') {
+            $center->activity_status = $status;
+            $center->status_note = $statusNote !== '' ? $statusNote : null;
+            $center->status_source_name = $url !== ''
+                ? 'ボランティアセンター公式サイト等'
+                : $center->status_source_name;
+            $center->status_source_url = $url !== '' ? $url : $center->status_source_url;
+        } elseif ($statusNote !== '') {
+            $center->status_note = $statusNote;
+        }
+
+        $center->status_checked_at = now();
 
         if ($url !== '') {
             $center->source_url = $url;
@@ -93,7 +118,30 @@ class VolunteerCentersIngest extends Command
         $center->fetched_at = now();
         $center->save();
 
-        $this->info('ボランティア募集情報を更新しました。');
+        $disasterIds = Disaster::whereHas('localGovernments', function ($query) use ($center) {
+            $query->where('local_governments.id', $center->local_government_id);
+        })->pluck('id');
+
+        $recorder = app(DisasterDataSourceRecorder::class);
+
+        foreach ($disasterIds as $disasterId) {
+            $recorder->record(
+                (int) $disasterId,
+                DisasterDataSourceCategory::VOLUNTEER_CENTERS,
+                $center->source_name,
+                $center->source_url,
+                $center->name,
+                $center->fetched_at,
+                null,
+                [
+                    'center_id' => $center->id,
+                    'activity_status' => $center->activity_status,
+                    'status_checked_at' => $center->status_checked_at?->toIso8601String(),
+                ]
+            );
+        }
+
+        $this->info('ボランティア募集情報・開設状況を更新しました。');
 
         return self::SUCCESS;
     }

@@ -46,7 +46,9 @@
             <!-- /.card-header -->
             <div class="card-body">
 
-              <a href="{{ route('disasters.create') }}" class="btn btn-primary pull-right"><i class="fas fa-plus"></i>  新規作成</a>
+              @if (auth()->user()->isAdmin())
+                <a href="{{ route('disasters.create') }}" class="btn btn-primary pull-right"><i class="fas fa-plus"></i>  新規作成</a>
+              @endif
               <br><br>
 
               @if(filled($disasters))
@@ -73,20 +75,20 @@
                   </td>
                   <td>
 
-                    <a href="{{ route('disaster_shelters.edit', ['disaster_id' => $user->id]) }}" class="btn btn-default"><i class="fas fa-edit"></i> 支援先を登録する</a>
+                    @if (auth()->user()->isAdmin())
+                      <a href="{{ route('disaster_shelters.edit', ['disaster_id' => $user->id]) }}" class="btn btn-default"><i class="fas fa-edit"></i> 支援先を登録する</a>
+                    @endif
 
-                    {{--                    @can('update', $user)--}}
-                      <a href="{{ route('disasters.show', ['disaster' => $user->id]) }}" class="btn btn-default"><i class="fas fa-eye"></i> 詳細</a>
+                    <a href="{{ route('disasters.show', ['disaster' => $user->id]) }}" class="btn btn-default"><i class="fas fa-eye"></i> 詳細</a>
 
+                    @if (auth()->user()->isAdmin())
                       <a href="{{ route('disasters.edit', ['disaster' => $user->id]) }}" class="btn btn-default"><i class="fas fa-edit"></i> 編集</a>
-{{--                    @endcan--}}
 
-{{--                    @can('delete', $user)--}}
                       {!! Form::open(['route' => ['disasters.destroy', $user->id], 'style' => 'display:inline']) !!}
                       @method('DELETE')
                       <button class="btn btn-danger" onclick="if ( ! confirm('削除します。よろしいですか？')){return false;}"><i class="fas fa-trash"></i> 削除</button>
                       {!! Form::close() !!}
-{{--                    @endcan--}}
+                    @endif
                   </td>
                 </tr>
                 @endforeach

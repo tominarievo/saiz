@@ -85,3 +85,9 @@ desktop.ini
 !/harness/reports/.gitkeep
 !/harness/reports/*/
 !/harness/reports/*/summary.json
+
+# Accidental shell redirection artifacts
+/ -e *
+/limit(
+/take(
+.deploy-test-local

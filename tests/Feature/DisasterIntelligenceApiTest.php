@@ -13,10 +13,10 @@ class DisasterIntelligenceApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createDisaster(): Disaster
+    private function createDisaster(string $name = '専門支援情報テスト災害'): Disaster
     {
         $disaster = new Disaster();
-        $disaster->name = '専門支援情報テスト災害';
+        $disaster->name = $name;
         $disaster->status = true;
         $disaster->event_date = '2026-11-01';
         $disaster->save();
@@ -46,6 +46,9 @@ class DisasterIntelligenceApiTest extends TestCase
             'scraped_at' => now(),
             'source_credibility' => 'A',
             'source_credibility_reason' => '県の公式資料',
+            'metadata' => [
+                'citation_url' => 'https://www.pref.chiba.lg.jp/source.html',
+            ],
         ]);
 
         $this->getJson('/api/v1/disaster/roads?disaster_id=' . $disaster->id)
@@ -53,10 +56,62 @@ class DisasterIntelligenceApiTest extends TestCase
             ->assertJsonPath('type', 'FeatureCollection')
             ->assertJsonPath('features.0.geometry.type', 'LineString')
             ->assertJsonPath('features.0.properties.source.org', 'テスト県')
+            ->assertJsonPath('features.0.properties.source.url', 'https://www.pref.chiba.lg.jp/source.html')
+            ->assertJsonPath('features.0.properties.source.citation_url', 'https://www.pref.chiba.lg.jp/source.html')
+            ->assertJsonPath('features.0.properties.source.retrieval_url', 'https://example.test/roads.pdf')
             ->assertJsonPath('features.0.properties.source.credibility', 'A')
             ->assertJsonPath('features.0.properties.source.credibility_reason', '県の公式資料')
+            ->assertJsonPath('features.0.properties.status', 'closed')
             ->assertJsonPath('features.0.properties.ai_extracted', false)
             ->assertJsonPath('meta.count', 1);
+    }
+
+    public function test_roads_api_excludes_open_and_returns_recovery_status(): void
+    {
+        $disaster = $this->createDisaster();
+
+        RoadRegulation::create([
+            'disaster_id' => $disaster->id,
+            'road_name' => '解除済み道路',
+            'regulation_type' => 'full_closure',
+            'status' => 'open',
+            'geometry' => ['type' => 'Point', 'coordinates' => [140.1, 35.6]],
+            'confidence_rank' => 'A',
+            'source_org' => 'テスト県',
+            'source_url' => 'https://example.test/open.pdf',
+        ]);
+
+        RoadRegulation::create([
+            'disaster_id' => $disaster->id,
+            'road_name' => '一部規制道路',
+            'regulation_type' => 'alternating',
+            'status' => 'partial',
+            'geometry' => ['type' => 'Point', 'coordinates' => [140.2, 35.7]],
+            'confidence_rank' => 'A',
+            'source_org' => 'テスト県',
+            'source_url' => 'https://example.test/partial.pdf',
+        ]);
+
+        RoadRegulation::create([
+            'disaster_id' => $disaster->id,
+            'road_name' => '状態不明道路',
+            'regulation_type' => 'full_closure',
+            'status' => 'unknown',
+            'geometry' => ['type' => 'Point', 'coordinates' => [140.3, 35.8]],
+            'confidence_rank' => 'A',
+            'source_org' => 'テスト県',
+            'source_url' => 'https://example.test/unknown.pdf',
+        ]);
+
+        $this->getJson('/api/v1/disaster/roads?disaster_id=' . $disaster->id)
+            ->assertOk()
+            ->assertJsonPath('meta.count', 1)
+            ->assertJsonPath('features.0.properties.road_name', '一部規制道路')
+            ->assertJsonPath('features.0.properties.status', 'partial');
+
+        $this->getJson('/api/v1/disaster/roads?disaster_id=' . $disaster->id . '&include_open=1')
+            ->assertOk()
+            ->assertJsonPath('meta.count', 2);
     }
 
     public function test_roads_api_filters_by_vehicle_class(): void
@@ -117,6 +172,45 @@ class DisasterIntelligenceApiTest extends TestCase
             ->assertJsonPath('meta.count', 1);
     }
 
+    public function test_waste_sites_api_excludes_closed_and_returns_verification(): void
+    {
+        $disaster = $this->createDisaster();
+
+        WasteSite::create([
+            'disaster_id' => $disaster->id,
+            'name' => '受入中の仮置場',
+            'status' => 'open',
+            'geometry' => ['type' => 'Point', 'coordinates' => [140.1, 35.6]],
+            'entry_allowed' => true,
+            'source_org' => 'テスト市',
+            'source_url' => 'https://example.test/waste-open.pdf',
+            'last_verified_at' => now(),
+            'status_source_url' => 'https://www.city.chiba.jp/waste.html',
+        ]);
+
+        WasteSite::create([
+            'disaster_id' => $disaster->id,
+            'name' => '受入終了の仮置場',
+            'status' => 'closed',
+            'closed_at' => now(),
+            'geometry' => ['type' => 'Point', 'coordinates' => [140.2, 35.7]],
+            'entry_allowed' => true,
+            'source_org' => 'テスト市',
+            'source_url' => 'https://example.test/waste-closed.pdf',
+        ]);
+
+        $this->getJson('/api/v1/disaster/waste-sites?disaster_id=' . $disaster->id)
+            ->assertOk()
+            ->assertJsonPath('meta.count', 1)
+            ->assertJsonPath('features.0.properties.name', '受入中の仮置場')
+            ->assertJsonPath('features.0.properties.status', 'open')
+            ->assertJsonPath('features.0.properties.status_source_url', 'https://www.city.chiba.jp/waste.html');
+
+        $this->getJson('/api/v1/disaster/waste-sites?disaster_id=' . $disaster->id . '&include_closed=1')
+            ->assertOk()
+            ->assertJsonPath('meta.count', 2);
+    }
+
     public function test_waste_sites_api_deduplicates_same_name_and_keeps_latest_source(): void
     {
         $disaster = $this->createDisaster();
@@ -149,6 +243,76 @@ class DisasterIntelligenceApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('meta.count', 1)
             ->assertJsonPath('features.0.properties.source.org', '新しい市');
+    }
+
+    public function test_waste_sites_api_excludes_sites_without_valid_location(): void
+    {
+        $disaster = $this->createDisaster();
+
+        WasteSite::create([
+            'disaster_id' => $disaster->id,
+            'name' => '位置不明の仮置場',
+            'status' => 'open',
+            'geometry' => ['type' => 'Point', 'coordinates' => [null, null]],
+            'entry_allowed' => true,
+            'source_org' => 'テスト市',
+            'source_url' => 'https://example.test/no-location.pdf',
+        ]);
+
+        WasteSite::create([
+            'disaster_id' => $disaster->id,
+            'name' => 'ゼロ座標の仮置場',
+            'status' => 'open',
+            'geometry' => ['type' => 'Point', 'coordinates' => [0, 0]],
+            'entry_allowed' => true,
+            'source_org' => 'テスト市',
+            'source_url' => 'https://example.test/zero-location.pdf',
+        ]);
+
+        WasteSite::create([
+            'disaster_id' => $disaster->id,
+            'name' => '位置ありの仮置場',
+            'status' => 'open',
+            'geometry' => ['type' => 'Point', 'coordinates' => [140.1, 35.6]],
+            'entry_allowed' => true,
+            'source_org' => 'テスト市',
+            'source_url' => 'https://example.test/valid-location.pdf',
+        ]);
+
+        $this->getJson('/api/v1/disaster/waste-sites?disaster_id=' . $disaster->id)
+            ->assertOk()
+            ->assertJsonPath('meta.count', 1)
+            ->assertJsonPath('features.0.properties.name', '位置ありの仮置場');
+    }
+
+    public function test_roads_api_excludes_geometry_without_valid_coordinates(): void
+    {
+        $disaster = $this->createDisaster();
+
+        RoadRegulation::create([
+            'disaster_id' => $disaster->id,
+            'road_name' => '位置不明の道路',
+            'regulation_type' => 'full_closure',
+            'geometry' => ['type' => 'Point', 'coordinates' => [null, null]],
+            'confidence_rank' => 'C',
+            'source_org' => 'テスト市',
+            'source_url' => 'https://example.test/no-location-road.pdf',
+        ]);
+
+        RoadRegulation::create([
+            'disaster_id' => $disaster->id,
+            'road_name' => '位置ありの道路',
+            'regulation_type' => 'full_closure',
+            'geometry' => ['type' => 'Point', 'coordinates' => [140.1, 35.6]],
+            'confidence_rank' => 'A',
+            'source_org' => 'テスト市',
+            'source_url' => 'https://example.test/valid-road.pdf',
+        ]);
+
+        $this->getJson('/api/v1/disaster/roads?disaster_id=' . $disaster->id)
+            ->assertOk()
+            ->assertJsonPath('meta.count', 1)
+            ->assertJsonPath('features.0.properties.road_name', '位置ありの道路');
     }
 
     public function test_meetings_api_returns_summary_and_deduplicates_by_held_at(): void
@@ -197,6 +361,42 @@ class DisasterIntelligenceApiTest extends TestCase
             ->assertJsonPath('meetings.0.decisions.0', '新しい決定')
             ->assertJsonPath('meetings.0.source.org', '新しい県')
             ->assertJsonPath('meetings.0.source.credibility', 'A');
+    }
+
+    public function test_meetings_api_excludes_meetings_from_other_disasters(): void
+    {
+        $toyama = $this->createDisaster('令和8年8月豪雨');
+        $chiba = $this->createDisaster('令和8年8月千葉豪雨');
+
+        config([
+            'disaster-intelligence.meeting_region_keywords' => [
+                $toyama->id => ['富山県', '北陸'],
+                $chiba->id => ['千葉県'],
+            ],
+        ]);
+
+        MeetingInsight::create([
+            'disaster_id' => $toyama->id,
+            'meeting_name' => '令和8年8月千葉豪雨・台風25号情報共有会議',
+            'held_at' => now()->subHour(),
+            'decisions' => ['千葉県の決定'],
+            'source_org' => 'JVOAD',
+            'source_url' => 'https://jvoad.jp/news-cat/disaster/',
+        ]);
+
+        MeetingInsight::create([
+            'disaster_id' => $toyama->id,
+            'meeting_name' => '第9回災害対策本部員会議',
+            'held_at' => now(),
+            'decisions' => ['富山県の決定'],
+            'source_org' => '富山県',
+            'source_url' => 'https://www.pref.toyama.jp/meeting.html',
+        ]);
+
+        $this->getJson('/api/v1/disaster/meetings?disaster_id=' . $toyama->id)
+            ->assertOk()
+            ->assertJsonPath('meta.count', 1)
+            ->assertJsonPath('meetings.0.meeting_name', '第9回災害対策本部員会議');
     }
 
     public function test_intelligence_page_is_public(): void

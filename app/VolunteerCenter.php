@@ -26,6 +26,11 @@ class VolunteerCenter extends Model
         'latest_recruitment_summary',
         'latest_recruitment_url',
         'recruitment_updated_at',
+        'activity_status',
+        'status_note',
+        'status_source_name',
+        'status_source_url',
+        'status_checked_at',
         'source_name',
         'source_url',
         'fetched_at',
@@ -40,6 +45,7 @@ class VolunteerCenter extends Model
         'latitude' => 'float',
         'longitude' => 'float',
         'recruitment_updated_at' => 'datetime',
+        'status_checked_at' => 'datetime',
         'fetched_at' => 'datetime',
     ];
 

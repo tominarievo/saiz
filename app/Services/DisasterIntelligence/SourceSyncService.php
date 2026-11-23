@@ -3,10 +3,9 @@
 namespace App\Services\DisasterIntelligence;
 
 use App\Jobs\ParseDisasterSourceJob;
+use App\Services\CollectedInformationBlocklist;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -15,7 +14,17 @@ use RuntimeException;
 class SourceSyncService
 {
     /**
+     * @param SourceHttpClient $http
+     */
+    public function __construct(
+        private readonly SourceHttpClient $http,
+        private readonly CollectedInformationBlocklist $blocklist
+    ) {
+    }
+
+    /**
      * 更新があればファイルを保存してジョブを投入する。
+     * 内容が変わっていても、前回パースから一定時間内は再パースしない。
      *
      * @param int $disasterId
      * @param array<string, mixed> $source
@@ -30,8 +39,14 @@ class SourceSyncService
             throw new RuntimeException('同期URLが不正です: ' . $url);
         }
 
+        if ($this->blocklist->isUrlBlocked($disasterId, $url)) {
+            return null;
+        }
+
         $type = (string) ($source['type'] ?? 'roads');
         $cacheKey = 'disaster-source-modified:' . $disasterId . ':' . sha1($url);
+        $contentHashKey = 'disaster-source-content-hash:' . $disasterId . ':' . sha1($url);
+        $lastParsedKey = 'disaster-source-parsed-at:' . $disasterId . ':' . sha1($url);
         $lastModified = Cache::get($cacheKey);
         $headers = [];
 
@@ -39,9 +54,7 @@ class SourceSyncService
             $headers['If-Modified-Since'] = $lastModified;
         }
 
-        $head = Http::withHeaders($headers)
-            ->timeout(30)
-            ->head($url);
+        $head = $this->http->head($url, $headers);
 
         if ($head->status() === 304) {
             return null;
@@ -57,9 +70,7 @@ class SourceSyncService
             return null;
         }
 
-        $response = Http::withHeaders($headers)
-            ->timeout(120)
-            ->get($url);
+        $response = $this->http->get($url, $headers);
 
         if ($response->status() === 304) {
             return null;
@@ -69,12 +80,35 @@ class SourceSyncService
             throw new RuntimeException('資料の取得に失敗しました: HTTP ' . $response->status() . ' ' . $url);
         }
 
+        $body = $response->body();
+        $contentHash = hash('sha256', $body);
+        $previousHash = Cache::get($contentHashKey);
+        $contentUnchanged = is_string($previousHash) && hash_equals($previousHash, $contentHash);
+
+        if (!$force && $contentUnchanged) {
+            if ($remoteModified) {
+                Cache::forever($cacheKey, $remoteModified);
+            }
+
+            return null;
+        }
+
+        $cooldown = max(0, (int) config('disaster-intelligence.source_reparse_cooldown', 86400));
+        $lastParsedAt = Cache::get($lastParsedKey);
+        $withinCooldown = $cooldown > 0
+            && is_numeric($lastParsedAt)
+            && (now()->timestamp - (int) $lastParsedAt) < $cooldown;
+
+        if (!$force && is_string($previousHash) && $withinCooldown) {
+            return null;
+        }
+
         $extension = $this->extension($url, $response->header('Content-Type'));
         $path = trim((string) config('disaster-intelligence.source_root', 'disaster-sources'), '/')
             . '/' . $disasterId . '/' . sha1($url) . '.' . $extension;
 
         Storage::disk(config('disaster-intelligence.storage_disk', 'local'))
-            ->put($path, $response->body());
+            ->put($path, $body);
 
         $lastModified = $remoteModified ?: $response->header('Last-Modified') ?: now()->toRfc7231String();
         Cache::forever($cacheKey, $lastModified);
@@ -87,6 +121,7 @@ class SourceSyncService
 
         $credibility = $source['credibility_rank'] ?? $this->domainRank($url);
         $credibilityReason = $source['credibility_reason'] ?? 'URLドメインから判定';
+        $sourcePageUrl = trim((string) ($source['source_page_url'] ?? ''));
 
         ParseDisasterSourceJob::dispatch(
             $disasterId,
@@ -97,8 +132,12 @@ class SourceSyncService
             $publishedAt ? (string) $publishedAt : null,
             isset($source['source_page']) ? (int) $source['source_page'] : null,
             $credibility,
-            $credibilityReason
+            $credibilityReason,
+            $sourcePageUrl !== '' ? $sourcePageUrl : null
         );
+
+        Cache::forever($contentHashKey, $contentHash);
+        Cache::forever($lastParsedKey, now()->timestamp);
 
         return $path;
     }

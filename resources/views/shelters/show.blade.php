@@ -104,7 +104,7 @@
 
                 <div class="col-sm-10">
 
-                  {{ $shelter->localGovernment->prefecture->name }}{{ $shelter->localGovernment->name }}{{ $shelter->npo_col_3 }}{{ $shelter->npo_col_4 }}
+                  {{ $shelter->localGovernment?->prefecture?->name }}{{ $shelter->localGovernment?->name }}{{ $shelter->npo_col_3 }}{{ $shelter->npo_col_4 }}
 
                 </div>
               </div>
@@ -312,16 +312,14 @@
             </div>
 
             <div class="card-footer">
-              {{--                    @can('update', $user)--}}
-              <a href="{{ route('shelters.edit', ['shelter' => $shelter->id]) }}" class="btn btn-primary"><i class="fas fa-edit"></i> 編集</a>
-              {{--                    @endcan--}}
+              @if (auth()->user()->isAdmin())
+                <a href="{{ route('shelters.edit', ['shelter' => $shelter->id]) }}" class="btn btn-primary"><i class="fas fa-edit"></i> 編集</a>
 
-              {{--                    @can('delete', $user)--}}
-              {!! Form::open(['route' => ['shelters.destroy', $shelter->id], 'style' => 'display:inline']) !!}
-              @method('DELETE')
-              <button class="btn btn-danger" onclick="if ( ! confirm('削除します。よろしいですか？')){return false;}"><i class="fas fa-trash"></i> 削除</button>
-              {!! Form::close() !!}
-              {{--                    @endcan--}}
+                {!! Form::open(['route' => ['shelters.destroy', $shelter->id], 'style' => 'display:inline']) !!}
+                @method('DELETE')
+                <button class="btn btn-danger" onclick="if ( ! confirm('削除します。よろしいですか？')){return false;}"><i class="fas fa-trash"></i> 削除</button>
+                {!! Form::close() !!}
+              @endif
             </div>
 
             <!-- END BASIC TABLE -->

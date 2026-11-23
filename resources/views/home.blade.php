@@ -216,8 +216,8 @@
                         <a href="{{ route('shelters.index', ["support_category1_id" => $category1_element->support_category1->id, "signal_id" => $signal->id, "start_date" => $day_carbon->format('Y/m/d'), "end_date" => $day_carbon->format('Y/m/d')]) }}">
 
                             <span class="badge {{ $loop->first ? "bg-".$signal->css_class : 'badge-dark' }}" data-toggle="tooltip" title="{{ $day_carbon->format('m/d') }}">
-                              @if (\Illuminate\Support\Arr::has($category1_element->list, "{$day_carbon->format('Y/m/d')}.{$signal->id}"))
-                                {{ \Illuminate\Support\Arr::get($category1_element->list, "{$day_carbon->format('Y/m/d')}.{$signal->id}") }}
+                              @if (isset($category1_element->list["{$day_carbon->format('Y/m/d')}.{$signal->id}"]))
+                                {{ $category1_element->list["{$day_carbon->format('Y/m/d')}.{$signal->id}"] }}
                               @else
                                 -
                               @endif
@@ -302,6 +302,10 @@
                 <a class="btn btn-primary" href="{{ route('disasters.index') }}">
                   {{--                  <span class="badge bg-danger">531</span>--}}
                   <i class="fas fa-info"></i> 災害情報
+                </a>
+
+                <a class="btn btn-primary" href="{{ route('admin.collected_information.index') }}">
+                  <i class="fas fa-database"></i> AI収集情報の管理
                 </a>
 
 

@@ -100,7 +100,11 @@ class DisasterShowTest extends TestCase
             ->assertSee('leaflet@1.9.4')
             ->assertSee('13101')
             ->assertSee('27102')
-            ->assertDontSee('L.marker');
+            ->assertSee('map-quick-panel', false)
+            ->assertSee('data-map-preset="resident"', false)
+            ->assertSee('municipality-search', false)
+            ->assertSee('map-share-button', false)
+            ->assertSee('map-app-phase-badge', false);
     }
 
     public function test_guest_can_view_disaster_detail(): void

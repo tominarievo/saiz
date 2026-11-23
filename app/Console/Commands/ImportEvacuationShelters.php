@@ -2,10 +2,13 @@
 
 namespace App\Console\Commands;
 
+use App\Disaster;
 use App\LocalGovernment;
+use App\Services\DisasterDataSource\DisasterDataSourceRecorder;
+use App\Services\DisasterIntelligence\SourceHttpClient;
+use App\Support\DisasterDataSourceCategory;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 
 class ImportEvacuationShelters extends Command
 {
@@ -45,7 +48,7 @@ class ImportEvacuationShelters extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(SourceHttpClient $http)
     {
         $inputCode = str_pad((string) $this->argument('code'), 5, '0', STR_PAD_LEFT);
 
@@ -66,8 +69,8 @@ class ImportEvacuationShelters extends Command
         $emergencyUrl = "https://hinanmap.gsi.go.jp/hinanjocp/defaultFtpData/csv/{$code}_2.csv";
 
         try {
-            $designatedCsv = Http::timeout(60)->get($designatedUrl)->throw()->body();
-            $emergencyCsv = Http::timeout(60)->get($emergencyUrl)->throw()->body();
+            $designatedCsv = $http->get($designatedUrl)->throw()->body();
+            $emergencyCsv = $http->get($emergencyUrl)->throw()->body();
         } catch (\Throwable $exception) {
             $this->error('避難所データの取得に失敗しました: ' . $exception->getMessage());
             return self::FAILURE;
@@ -87,6 +90,31 @@ class ImportEvacuationShelters extends Command
                 $localGovernment->evacuationShelters()->create($shelter);
             }
         });
+
+        $disasterIds = Disaster::whereHas('localGovernments', function ($query) use ($localGovernment) {
+            $query->where('local_governments.id', $localGovernment->id);
+        })->pluck('id');
+
+        $recorder = app(DisasterDataSourceRecorder::class);
+        $collectedAt = now();
+
+        foreach ($disasterIds as $disasterId) {
+            foreach ([
+                ['url' => $designatedUrl, 'title' => '指定避難所'],
+                ['url' => $emergencyUrl, 'title' => '指定緊急避難場所'],
+            ] as $source) {
+                $recorder->record(
+                    (int) $disasterId,
+                    DisasterDataSourceCategory::EVACUATION_SHELTERS,
+                    '国土地理院 指定緊急避難場所・指定避難所データ',
+                    $source['url'],
+                    $source['title'],
+                    $collectedAt,
+                    null,
+                    ['local_government_id' => $localGovernment->id]
+                );
+            }
+        }
 
         $this->info(count($shelters) . '件の避難所・避難場所を登録しました。');
 

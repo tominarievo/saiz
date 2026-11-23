@@ -10,9 +10,10 @@
 抽出ルール:
 - 仮置場名、開設状況、受入期間、受入可能品目、受入不可品目、車両制限、支援団体の搬入条件を抽出する。
 - 過去の搬入実績、処理量、感謝状、挨拶は除外する。
-- 位置が示される場合は緯度経度を推定する。推定できない場合は null にする。
-- geometry は GeoJSON Point（[経度, 緯度]）を返す。
-- status は open / closed / unknown のいずれか。
+- 仮置場名が特定できない場合でも、受入終了・受付終了・一般受入終了などの告知があれば、ページタイトルを name として1件返す。
+- 位置が示される場合は緯度経度を推定する。推定できない場合は null にする。座標が不明でもレコードを省略しない。
+- geometry は GeoJSON Point（[経度, 緯度]）。座標不明なら null。
+- status は open / closed / unknown のいずれか。受入終了の告知なら closed。
 - max_payload_tons は数値。不明なら null。
 - support_conditions は許可証要否、事前予約、窓口、搬入時間などをキーと値で整理する。
 - 推測で存在しない仮置場や品目を作らない。
@@ -21,7 +22,7 @@
 {
   "waste_sites": [
     {
-      "name": "仮置場名",
+      "name": "仮置場名または告知のタイトル",
       "status": "open",
       "geometry": {"type": "Point", "coordinates": [139.0, 35.0]},
       "latitude": null,

@@ -39,15 +39,6 @@
         </li>
 
         <li class="nav-item">
-          <a href="{{ route('disasters.index') }}" class="nav-link">
-            <i class="nav-icon fas fa-th"></i>
-            <p>
-              災害情報
-            </p>
-          </a>
-        </li>
-
-        <li class="nav-item">
           <a href="{{ route('seeds.index') }}" class="nav-link">
             <i class="nav-icon fas fa-th"></i>
             <p>
@@ -62,6 +53,15 @@
             <i class="nav-icon fas fa-th"></i>
             <p>
               管理ユーザー
+            </p>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="{{ route('admin.collected_information.index') }}" class="nav-link">
+            <i class="nav-icon fas fa-database"></i>
+            <p>
+              AI収集情報の管理
             </p>
           </a>
         </li>
@@ -90,6 +90,15 @@
           </li>
 
         @endif
+
+        <li class="nav-item">
+          <a href="{{ route('disasters.index') }}" class="nav-link">
+            <i class="nav-icon fas fa-th"></i>
+            <p>
+              災害情報
+            </p>
+          </a>
+        </li>
 
         @if ( ! Auth::user()->is_writer)
         <li class="nav-item">

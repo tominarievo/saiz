@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\DisasterType;
 use App\EvacuationShelter;
+use App\Services\DisasterDataSource\DisasterDataSourceService;
+use App\Services\DisasterMapContext;
+use App\Support\DisasterDataSourceCategory;
 use App\VolunteerCenter;
 use App\Http\Requests\DisasterRequest;
 use App\Disaster;
@@ -17,7 +20,7 @@ class DisasterController extends Controller
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            $publicMethods = ['show', 'intelligence', 'schoolDistricts', 'historicalBoundaries', 'population', 'smallAreas', 'evacuationShelters', 'volunteerCenters'];
+            $publicMethods = ['index', 'show', 'intelligence', 'sources', 'schoolDistricts', 'historicalBoundaries', 'population', 'smallAreas', 'evacuationShelters', 'volunteerCenters'];
 
             if (!in_array($request->route()->getActionMethod(), $publicMethods, true)) {
                 $this->authorizeAdmin();
@@ -28,14 +31,14 @@ class DisasterController extends Controller
     }
 
     /**
-     * 公開中の災害、または管理者だけに詳細を許可する。
+     * 公開中の災害、またはログイン中のユーザーだけに詳細を許可する。
      *
      * @param Disaster $disaster
      * @return void
      */
     private function ensureDisasterVisible(Disaster $disaster): void
     {
-        if (!$disaster->status && (!auth()->check() || !auth()->user()->isAdmin())) {
+        if (!$disaster->status && !auth()->check()) {
             abort(404);
         }
     }
@@ -63,57 +66,15 @@ class DisasterController extends Controller
      * @param Disaster $disaster
      * @return \Illuminate\Contracts\View\View
      */
-    public function show(Disaster $disaster)
+    public function show(Disaster $disaster, DisasterMapContext $mapContext)
     {
         $this->ensureDisasterVisible($disaster);
 
-        $disaster->load(['disasterTypes', 'localGovernments.prefecture', 'informationLinks']);
+        $data = $mapContext->build($disaster);
+        $data['disasterOptions'] = $mapContext->options();
+        $data['topInformation'] = collect();
 
-        $mapMunicipalities = $disaster->localGovernments
-            ->map(function ($localGovernment) {
-                $adminCode = substr($localGovernment->code, 0, 5);
-                $codes = $localGovernment->is_designated_city
-                    ? config("designated-city-wards.{$adminCode}", [])
-                    : [$adminCode];
-
-                return [
-                    'name' => $localGovernment->prefecture->name . ' ' . $localGovernment->name,
-                    'prefecture_code' => $localGovernment->prefecture_code,
-                    'codes' => array_values($codes),
-                ];
-            })
-            ->filter(fn ($municipality) => filled($municipality['codes']))
-            ->values();
-
-        $schoolDistrictUrlTemplate = route('disasters.school_districts', [
-            'disaster' => $disaster->id,
-            'type' => 'TYPE',
-        ]);
-
-        $historicalUrlTemplate = route('disasters.historical_boundaries', [
-            'disaster' => $disaster->id,
-            'date' => 'DATE',
-        ]);
-
-        $prefectureCodes = $disaster->localGovernments
-            ->pluck('prefecture_code')
-            ->filter()
-            ->unique()
-            ->values();
-
-        $historicalDates = HistoricalBoundary::whereIn('prefecture_code', $prefectureCodes)
-            ->orderBy('boundary_date')
-            ->pluck('boundary_date')
-            ->unique()
-            ->values();
-
-        return view('disasters.show', compact(
-            'disaster',
-            'mapMunicipalities',
-            'schoolDistrictUrlTemplate',
-            'historicalUrlTemplate',
-            'historicalDates'
-        ));
+        return view('disasters.show', $data);
     }
 
     /**
@@ -122,11 +83,41 @@ class DisasterController extends Controller
      * @param Disaster $disaster
      * @return \Illuminate\Contracts\View\View
      */
-    public function intelligence(Disaster $disaster)
+    public function intelligence(Disaster $disaster, DisasterDataSourceService $dataSourceService)
     {
         $this->ensureDisasterVisible($disaster);
 
-        return view('disasters.intelligence', compact('disaster'));
+        $dataCollectionDates = $dataSourceService->latestCollectedAt($disaster->id);
+
+        return view('disasters.intelligence', compact('disaster', 'dataCollectionDates'));
+    }
+
+    /**
+     * 災害ごとのデータ出典ページを表示する。
+     *
+     * @param Disaster $disaster
+     * @param DisasterDataSourceService $dataSourceService
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function sources(Disaster $disaster, DisasterDataSourceService $dataSourceService)
+    {
+        $this->ensureDisasterVisible($disaster);
+
+        $categories = DisasterDataSourceCategory::labels();
+        $latestCollectedAt = $dataSourceService->latestCollectedAt($disaster->id);
+        $groupedSources = $dataSourceService->groupedSources($disaster->id);
+        $intelligenceSources = $disaster->intelligenceSources()
+            ->orderBy('type')
+            ->orderBy('source_org')
+            ->get();
+
+        return view('disasters.sources', compact(
+            'disaster',
+            'categories',
+            'latestCollectedAt',
+            'groupedSources',
+            'intelligenceSources'
+        ));
     }
 
     /**
@@ -436,6 +427,13 @@ class DisasterController extends Controller
                         'url' => $center->latest_recruitment_url,
                         'updated_at' => $center->recruitment_updated_at?->toIso8601String(),
                     ],
+                    'activity_status' => $center->activity_status ?? 'unknown',
+                    'status_note' => $center->status_note,
+                    'status_source' => [
+                        'name' => $center->status_source_name,
+                        'url' => $center->status_source_url,
+                    ],
+                    'status_checked_at' => $center->status_checked_at?->toIso8601String(),
                     'source' => [
                         'name' => $center->source_name,
                         'url' => $center->source_url,

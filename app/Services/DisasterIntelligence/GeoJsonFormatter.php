@@ -3,6 +3,7 @@
 namespace App\Services\DisasterIntelligence;
 
 use App\RoadRegulation;
+use App\Support\SourceLicense;
 use App\WasteSite;
 use Illuminate\Support\Collection;
 
@@ -32,9 +33,14 @@ class GeoJsonFormatter
                     'road_name' => $road->road_name,
                     'section' => $road->section,
                     'regulation_type' => $road->regulation_type,
+                    'status' => $road->status,
                     'vehicle_classes' => $road->vehicle_classes ?? [],
                     'reason' => $road->reason,
                     'confidence_rank' => $road->confidence_rank,
+                    'recovered_at' => $road->recovered_at?->toIso8601String(),
+                    'last_verified_at' => $road->last_verified_at?->toIso8601String(),
+                    'updated_at' => $road->updated_at?->toIso8601String(),
+                    'recovery_source_url' => $road->recovery_source_url,
                     'source' => $this->source($road),
                     'ai_extracted' => $road->confidence_rank === 'C',
                     'disclaimer' => config('disaster-intelligence.disclaimer'),
@@ -69,6 +75,10 @@ class GeoJsonFormatter
                     'id' => $site->id,
                     'name' => $site->name,
                     'status' => $site->status,
+                    'last_verified_at' => $site->last_verified_at?->toIso8601String(),
+                    'updated_at' => $site->updated_at?->toIso8601String(),
+                    'closed_at' => $site->closed_at?->toIso8601String(),
+                    'status_source_url' => $site->status_source_url,
                     'acceptance_start_at' => $site->acceptance_start_at?->toIso8601String(),
                     'acceptance_end_at' => $site->acceptance_end_at?->toIso8601String(),
                     'vehicle_limit' => $site->vehicle_limit,
@@ -112,13 +122,19 @@ class GeoJsonFormatter
     private function geometry(?array $geometry, ?float $latitude, ?float $longitude): ?array
     {
         if (is_array($geometry) && isset($geometry['type'], $geometry['coordinates'])) {
-            return $geometry;
+            $normalized = $this->normalizeGeometry($geometry);
+
+            if ($normalized !== null) {
+                return $normalized;
+            }
         }
 
-        if ($latitude !== null && $longitude !== null) {
+        $point = $this->coordinatePair($longitude, $latitude);
+
+        if ($point !== null) {
             return [
                 'type' => 'Point',
-                'coordinates' => [$longitude, $latitude],
+                'coordinates' => $point,
             ];
         }
 
@@ -126,18 +142,132 @@ class GeoJsonFormatter
     }
 
     /**
+     * @param array<string, mixed> $geometry
+     * @return array<string, mixed>|null
+     */
+    private function normalizeGeometry(array $geometry): ?array
+    {
+        $coordinates = $geometry['coordinates'] ?? null;
+
+        return match ($geometry['type'] ?? null) {
+            'Point' => $this->normalizePoint($coordinates),
+            'LineString' => $this->normalizeLineString($coordinates),
+            'MultiLineString' => $this->normalizeMultiLineString($coordinates),
+            default => null,
+        };
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function normalizePoint(mixed $coordinates): ?array
+    {
+        if (!is_array($coordinates)) {
+            return null;
+        }
+
+        $point = $this->coordinatePair($coordinates[0] ?? null, $coordinates[1] ?? null);
+
+        return $point === null ? null : ['type' => 'Point', 'coordinates' => $point];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function normalizeLineString(mixed $coordinates): ?array
+    {
+        if (!is_array($coordinates) || count($coordinates) < 2) {
+            return null;
+        }
+
+        $points = [];
+
+        foreach ($coordinates as $coordinate) {
+            if (!is_array($coordinate)) {
+                return null;
+            }
+
+            $point = $this->coordinatePair($coordinate[0] ?? null, $coordinate[1] ?? null);
+
+            if ($point === null) {
+                return null;
+            }
+
+            $points[] = $point;
+        }
+
+        return ['type' => 'LineString', 'coordinates' => $points];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function normalizeMultiLineString(mixed $coordinates): ?array
+    {
+        if (!is_array($coordinates) || $coordinates === []) {
+            return null;
+        }
+
+        $lines = [];
+
+        foreach ($coordinates as $line) {
+            $normalized = $this->normalizeLineString($line);
+
+            if ($normalized === null) {
+                return null;
+            }
+
+            $lines[] = $normalized['coordinates'];
+        }
+
+        return ['type' => 'MultiLineString', 'coordinates' => $lines];
+    }
+
+    /**
+     * @return array{0: float, 1: float}|null
+     */
+    private function coordinatePair(mixed $longitude, mixed $latitude): ?array
+    {
+        if (!is_numeric($longitude) || !is_numeric($latitude)) {
+            return null;
+        }
+
+        $lng = (float) $longitude;
+        $lat = (float) $latitude;
+
+        if (!is_finite($lng) || !is_finite($lat)) {
+            return null;
+        }
+
+        if ($lng < -180.0 || $lng > 180.0 || $lat < -90.0 || $lat > 90.0) {
+            return null;
+        }
+
+        if (abs($lng) < 0.000001 && abs($lat) < 0.000001) {
+            return null;
+        }
+
+        return [$lng, $lat];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function source(RoadRegulation|WasteSite $model): array
     {
+        $metadata = is_array($model->metadata) ? $model->metadata : [];
+        $citationUrl = is_string($metadata['citation_url'] ?? null) ? $metadata['citation_url'] : null;
+
         return [
             'org' => $model->source_org,
-            'url' => $model->source_url,
+            'url' => $citationUrl ?: $model->source_url,
+            'citation_url' => $citationUrl,
+            'retrieval_url' => $model->source_url,
             'published_at' => $model->source_published_at?->toIso8601String(),
             'scraped_at' => $model->scraped_at?->toIso8601String(),
-            'raw_file_path' => $model->raw_file_path,
             'credibility' => $model->source_credibility,
             'credibility_reason' => $model->source_credibility_reason,
+            'license' => SourceLicense::forUrl($citationUrl ?: $model->source_url),
         ];
     }
 }

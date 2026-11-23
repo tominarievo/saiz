@@ -48,6 +48,9 @@ class VolunteerCentersContext extends Command
                         'url' => $center->latest_recruitment_url,
                         'updated_at' => $center->recruitment_updated_at?->toIso8601String(),
                     ],
+                    'activity_status' => $center->activity_status,
+                    'status_note' => $center->status_note,
+                    'status_checked_at' => $center->status_checked_at?->toIso8601String(),
                 ];
             })
             ->values();

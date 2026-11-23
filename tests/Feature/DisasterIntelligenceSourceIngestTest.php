@@ -37,14 +37,15 @@ class DisasterIntelligenceSourceIngestTest extends TestCase
                 [
                     'type' => 'roads',
                     'url' => 'https://www.pref.chiba.lg.jp/road.pdf',
+                    'source_page_url' => 'https://www.pref.chiba.lg.jp/road.html',
                     'source_org' => '千葉県',
                     'credibility_rank' => 'B',
                     'credibility_reason' => '県の公式PDF',
                 ],
                 [
                     'type' => 'meeting_insights',
-                    'url' => 'https://example.com/minutes.pdf',
-                    'source_org' => '不明な団体',
+                    'url' => 'https://www.fukushi-kumamoto.or.jp/minutes.pdf',
+                    'source_org' => '熊本県社会福祉協議会',
                     'credibility_rank' => 'A',
                     'credibility_reason' => 'AI判定A',
                 ],
@@ -52,6 +53,11 @@ class DisasterIntelligenceSourceIngestTest extends TestCase
                     'type' => 'unknown',
                     'url' => 'https://example.com/ignored.pdf',
                     'source_org' => '無視',
+                ],
+                [
+                    'type' => 'roads',
+                    'url' => 'https://example.com/not-allowed.pdf',
+                    'source_org' => '許可外の団体',
                 ],
             ],
         ], JSON_UNESCAPED_UNICODE));
@@ -74,10 +80,17 @@ class DisasterIntelligenceSourceIngestTest extends TestCase
 
         $road = DisasterIntelligenceSource::where('type', 'roads')->firstOrFail();
         $this->assertSame('B', $road->credibility_rank);
+        $this->assertSame(
+            'https://www.pref.chiba.lg.jp/road.html',
+            $road->metadata['source_page_url'] ?? null
+        );
 
         $meeting = DisasterIntelligenceSource::where('type', 'meeting_insights')->firstOrFail();
-        $this->assertSame('C', $meeting->credibility_rank);
+        $this->assertSame('B', $meeting->credibility_rank);
         $this->assertSame(sha1($meeting->url), $meeting->url_hash);
+        $this->assertDatabaseMissing('disaster_intelligence_sources', [
+            'url' => 'https://example.com/not-allowed.pdf',
+        ]);
     }
 
     public function test_sync_includes_discovered_sources_and_passes_credibility(): void
@@ -87,8 +100,8 @@ class DisasterIntelligenceSourceIngestTest extends TestCase
         DisasterIntelligenceSource::create([
             'disaster_id' => $disaster->id,
             'type' => 'roads',
-            'url' => 'https://example.test/discovered-road.pdf',
-            'url_hash' => sha1('https://example.test/discovered-road.pdf'),
+            'url' => 'https://www.pref.chiba.lg.jp/discovered-road.pdf',
+            'url_hash' => sha1('https://www.pref.chiba.lg.jp/discovered-road.pdf'),
             'source_org' => 'テスト県',
             'credibility_rank' => 'A',
             'credibility_reason' => '県の公式発表',
@@ -98,9 +111,14 @@ class DisasterIntelligenceSourceIngestTest extends TestCase
         Storage::fake('local');
         Cache::flush();
         Queue::fake();
+        config([
+            'disaster-intelligence.crawler.respect_robots' => false,
+            'disaster-intelligence.crawler.resolve_dns' => false,
+            'disaster-intelligence.crawler.min_interval_ms' => 0,
+        ]);
 
         Http::fake([
-            'https://example.test/discovered-road.pdf' => Http::response('dummy pdf body', 200, [
+            'https://www.pref.chiba.lg.jp/discovered-road.pdf' => Http::response('dummy pdf body', 200, [
                 'Content-Type' => 'application/pdf',
                 'Last-Modified' => 'Wed, 21 Oct 2026 07:28:00 GMT',
             ]),
@@ -112,7 +130,7 @@ class DisasterIntelligenceSourceIngestTest extends TestCase
 
         Queue::assertPushed(ParseDisasterSourceJob::class, function (ParseDisasterSourceJob $job) use ($disaster) {
             return $job->disasterId === $disaster->id
-                && $job->sourceUrl === 'https://example.test/discovered-road.pdf'
+                && $job->sourceUrl === 'https://www.pref.chiba.lg.jp/discovered-road.pdf'
                 && $job->sourceCredibility === 'A'
                 && $job->sourceCredibilityReason === '県の公式発表';
         });

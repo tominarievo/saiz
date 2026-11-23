@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\HistoricalBoundary;
+use App\Services\DisasterIntelligence\RobotsTxt;
+use App\Services\DisasterIntelligence\SourceUrlGuard;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
@@ -187,7 +189,15 @@ class ImportHistoricalBoundaries extends Command
      */
     private function download(string $url, string $path): void
     {
+        $guard = app(SourceUrlGuard::class);
+        $guard->assertAllowed($url);
+
+        if (!app(RobotsTxt::class)->isAllowed($url)) {
+            throw new \RuntimeException('robots.txtで取得が禁止されています: ' . $url);
+        }
+
         File::ensureDirectoryExists(dirname($path));
+        $userAgent = (string) config('disaster-intelligence.crawler.user_agent', 'SaizBot/1.0');
 
         $process = new Process([
             'curl',
@@ -197,6 +207,8 @@ class ImportHistoricalBoundaries extends Command
             '--show-error',
             '--max-time',
             '180',
+            '-A',
+            $userAgent,
             '-o',
             $path,
             $url,

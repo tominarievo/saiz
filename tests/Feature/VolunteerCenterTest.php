@@ -58,6 +58,11 @@ class VolunteerCenterTest extends TestCase
             'latest_recruitment_summary' => '事前登録制で募集しています。',
             'latest_recruitment_url' => 'https://himivc-toyama.jimdofree.com/',
             'recruitment_updated_at' => now(),
+            'activity_status' => 'open',
+            'status_note' => '公式サイトで募集受付中を確認',
+            'status_source_name' => '公式サイト',
+            'status_source_url' => 'https://himivc-toyama.jimdofree.com/',
+            'status_checked_at' => now(),
             'source_name' => '公式サイト',
             'source_url' => 'https://himivc-toyama.jimdofree.com/',
             'fetched_at' => now(),
@@ -69,6 +74,8 @@ class VolunteerCenterTest extends TestCase
             ->assertJsonPath('meta.count', 1)
             ->assertJsonPath('centers.0.name', '氷見市災害ボランティア・支え合いセンター')
             ->assertJsonPath('centers.0.latest_recruitment.title', 'ボランティア募集受付中')
-            ->assertJsonPath('centers.0.latest_recruitment.summary', '事前登録制で募集しています。');
+            ->assertJsonPath('centers.0.latest_recruitment.summary', '事前登録制で募集しています。')
+            ->assertJsonPath('centers.0.activity_status', 'open')
+            ->assertJsonPath('centers.0.status_note', '公式サイトで募集受付中を確認');
     }
 }

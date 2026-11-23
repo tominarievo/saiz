@@ -133,6 +133,33 @@
       white-space: nowrap;
     }
 
+    .map-app-disaster-switcher {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-width: 0;
+      flex-shrink: 1;
+    }
+
+    .map-app-disaster-switcher label {
+      margin: 0;
+      color: #6c757d;
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+
+    .map-app-disaster-switcher select {
+      min-width: 160px;
+      max-width: 320px;
+      height: 32px;
+      padding: 0 1.8rem 0 0.5rem;
+      color: #212529;
+      background: #fff;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      font-size: 0.82rem;
+    }
+
     .map-app-topbar-actions {
       display: flex;
       align-items: center;
@@ -801,6 +828,436 @@
       line-height: 1.4;
     }
 
+    .map-app-phase-badge {
+      display: inline-block;
+      padding: 0.14rem 0.5rem;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      line-height: 1.5;
+      white-space: nowrap;
+    }
+
+    .map-app-phase-badge.is-danger {
+      background: #b02a37;
+    }
+
+    .map-app-phase-badge.is-success {
+      background: #1e7e34;
+    }
+
+    .map-app-phase-badge.is-warning {
+      color: #212529;
+      background: #ffc107;
+    }
+
+    .map-app-phase-badge.is-secondary {
+      background: #5a6268;
+    }
+
+    .map-app-last-updated {
+      color: #495057;
+      font-size: 0.7rem;
+      white-space: nowrap;
+    }
+
+    .map-app-presets {
+      display: flex;
+      flex-shrink: 0;
+      gap: 0.3rem;
+      padding: 0.5rem 0.65rem;
+      overflow-x: auto;
+      background: #fff;
+      border-bottom: 1px solid #e9ecef;
+      scrollbar-width: none;
+    }
+
+    .map-app-presets::-webkit-scrollbar {
+      display: none;
+    }
+
+    .map-app-preset {
+      flex: 0 0 auto;
+      padding: 0.35rem 0.55rem;
+      color: #1f3c88;
+      background: #f1f5fb;
+      border: 1px solid #c9d6ee;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .map-app-preset:hover,
+    .map-app-preset:focus-visible {
+      background: #e3ecfa;
+      outline: 2px solid #17a2b8;
+      outline-offset: 1px;
+    }
+
+    .map-app-preset[aria-pressed="true"] {
+      color: #fff;
+      background: #1f3c88;
+      border-color: #1f3c88;
+    }
+
+    .map-municipality-filter {
+      margin-bottom: 0.45rem;
+    }
+
+    .map-municipality-list {
+      max-height: 15rem;
+      overflow-y: auto;
+      padding-right: 0.15rem;
+    }
+
+    .map-municipality-group {
+      margin-bottom: 0.35rem;
+    }
+
+    .map-municipality-group > summary {
+      color: #1f3c88;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .map-municipality-group > summary span {
+      color: #6c757d;
+      font-size: 0.68rem;
+      font-weight: 400;
+    }
+
+    .map-municipality-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.35rem;
+    }
+
+    .map-municipality-tag {
+      padding: 0.2rem 0.5rem;
+      color: #212529;
+      background: #fff;
+      border: 1px solid #ced4da;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      cursor: pointer;
+    }
+
+    .map-municipality-tag:hover,
+    .map-municipality-tag:focus-visible,
+    .map-municipality-tag.is-hovered {
+      color: #fff;
+      background: #17a2b8;
+      border-color: #17a2b8;
+      outline: none;
+    }
+
+    .map-municipality-tag.is-selected {
+      color: #fff;
+      background: #b02a37;
+      border-color: #b02a37;
+      box-shadow: 0 0 0 2px rgba(176, 42, 55, 0.2);
+    }
+
+    .map-municipality-empty {
+      margin: 0;
+      color: #6c757d;
+      font-size: 0.78rem;
+    }
+
+    .map-app-detail-row-municipalities {
+      grid-template-columns: 5.5rem 1fr;
+    }
+
+    .map-app-digest {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 0.5rem;
+    }
+
+    .map-app-digest-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.4rem;
+    }
+
+    .map-app-digest-head strong {
+      color: #1f3c88;
+      font-size: 0.86rem;
+    }
+
+    .map-app-digest-more {
+      padding: 0.15rem 0.4rem;
+      color: #1f3c88;
+      background: transparent;
+      border: 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .map-app-digest-more:hover,
+    .map-app-digest-more:focus-visible {
+      text-decoration: underline;
+      outline: none;
+    }
+
+    .map-app-digest-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.15rem 0.45rem;
+      width: 100%;
+      padding: 0.4rem 0;
+      color: #212529;
+      background: transparent;
+      border: 0;
+      border-top: 1px solid #e9ecef;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .map-app-digest-item:hover,
+    .map-app-digest-item:focus-visible {
+      color: #1f3c88;
+      outline: none;
+    }
+
+    .map-app-digest-type {
+      color: #6c757d;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    .map-app-digest-title {
+      overflow: hidden;
+      font-size: 0.78rem;
+      font-weight: 600;
+      line-height: 1.4;
+      text-overflow: ellipsis;
+    }
+
+    .map-app-digest-date {
+      grid-column: 2;
+      color: #6c757d;
+      font-size: 0.67rem;
+    }
+
+    .map-app-digest-empty {
+      margin: 0;
+      color: #6c757d;
+      font-size: 0.75rem;
+    }
+
+    .map-app-news-item.is-focused {
+      animation: map-news-focus 2.2s ease-out;
+    }
+
+    @keyframes map-news-focus {
+      0%,
+      60% {
+        background: #fff3cd;
+      }
+      100% {
+        background: transparent;
+      }
+    }
+
+    .map-quick-panel {
+      position: fixed;
+      top: 140px;
+      right: 12px;
+      z-index: 1050;
+      width: 236px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.97);
+      border: 1px solid rgba(31, 60, 136, 0.18);
+      border-radius: 0.5rem;
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(6px);
+    }
+
+    .map-quick-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      width: 100%;
+      padding: 0.55rem 0.65rem;
+      color: #1f3c88;
+      background: transparent;
+      border: 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .map-quick-toggle:hover,
+    .map-quick-toggle:focus-visible {
+      background: #eef2f9;
+      outline: none;
+    }
+
+    .map-quick-chevron {
+      margin-left: auto;
+      transition: transform 0.2s ease;
+    }
+
+    .map-quick-panel.is-collapsed .map-quick-chevron {
+      transform: rotate(180deg);
+    }
+
+    .map-quick-panel.is-collapsed .map-quick-body {
+      display: none;
+    }
+
+    .map-quick-body {
+      max-height: calc(100vh - 180px);
+      padding: 0 0.65rem 0.65rem;
+      overflow-y: auto;
+    }
+
+    .map-quick-layers {
+      display: flex;
+      flex-direction: column;
+      gap: 0.22rem;
+      padding-bottom: 0.45rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .map-quick-layers label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+
+    .map-quick-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      padding: 0.45rem 0;
+      color: #495057;
+      font-size: 0.7rem;
+      line-height: 1.35;
+    }
+
+    .map-quick-legend-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+
+    .map-quick-legend-swatch {
+      flex-shrink: 0;
+      width: 0.65rem;
+      height: 0.65rem;
+      margin-top: 0.15rem;
+      border-radius: 999px;
+    }
+
+    .map-quick-legend-swatch.is-line {
+      height: 0.18rem;
+      margin-top: 0.42rem;
+      border-radius: 0;
+    }
+
+    .map-quick-legend-empty {
+      color: #6c757d;
+    }
+
+    .map-quick-actions {
+      display: flex;
+      gap: 0.35rem;
+      padding-top: 0.45rem;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .map-quick-action {
+      flex: 1;
+      padding: 0.35rem 0.3rem;
+      color: #1f3c88;
+      background: #f1f5fb;
+      border: 1px solid #c9d6ee;
+      border-radius: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .map-quick-action:hover,
+    .map-quick-action:focus-visible {
+      background: #e3ecfa;
+      outline: 2px solid #17a2b8;
+      outline-offset: 1px;
+    }
+
+    .map-sheet-handle {
+      display: none;
+    }
+
+    .map-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      z-index: 20000;
+      max-width: calc(100vw - 2rem);
+      padding: 0.55rem 0.9rem;
+      transform: translateX(-50%);
+      color: #fff;
+      background: #212529;
+      border-radius: 0.4rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .map-toast[hidden] {
+      display: none;
+    }
+
+    .map-gps-marker span {
+      display: block;
+      width: 16px;
+      height: 16px;
+      background: #0d6efd;
+      border: 3px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px #0d6efd, 0 0 0 8px rgba(13, 110, 253, 0.22);
+    }
+
+    .map-locate-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      color: #1f3c88;
+      background: #fff;
+      border: 0;
+      border-radius: 2px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .map-locate-button:hover,
+    .map-locate-button:focus-visible {
+      color: #12285f;
+      background: #eef2f9;
+      outline: 2px solid #17a2b8;
+      outline-offset: -2px;
+    }
+
     .leaflet-top.leaflet-right {
       top: 64px;
     }
@@ -813,12 +1270,107 @@
       }
 
       .map-app-sidebar {
-        top: 52px;
-        width: 88vw;
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        max-width: none;
+        height: calc(100vh - 52px);
+        border-radius: 1rem 1rem 0 0;
+        box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.25);
+        transform: translateY(calc(100% - 44px));
+        transition: transform 0.25s ease;
+      }
+
+      .map-app-sidebar.is-open {
+        transform: translateY(0);
+      }
+
+      .map-app-sidebar[data-sheet-state="minimized"] {
+        transform: translateY(calc(100% - 44px));
+      }
+
+      .map-app-sidebar[data-sheet-state="half"] {
+        transform: translateY(50%);
+      }
+
+      .map-app-sidebar[data-sheet-state="full"] {
+        transform: translateY(0);
+      }
+
+      .map-app-sidebar-resizer {
+        display: none;
+      }
+
+      .map-sheet-handle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        height: 44px;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .map-sheet-handle:active {
+        cursor: grabbing;
+      }
+
+      .map-sheet-handle span {
+        width: 2.6rem;
+        height: 0.32rem;
+        background: #adb5bd;
+        border-radius: 999px;
+      }
+
+      .map-sheet-handle:focus-visible {
+        outline: 2px solid #17a2b8;
+        outline-offset: -4px;
+      }
+
+      .map-app-presets {
+        padding: 0.4rem 0.5rem;
+      }
+
+      .map-app-preset {
+        font-size: 0.68rem;
+      }
+
+      .map-quick-panel {
+        top: 134px;
+        right: 8px;
+        width: min(228px, calc(100vw - 16px));
+      }
+
+      .map-quick-panel.is-collapsed {
+        width: auto;
+      }
+
+      .map-quick-panel.is-collapsed .map-quick-toggle span {
+        display: none;
+      }
+
+      .map-app-title {
+        display: none;
       }
 
       .map-app-title-meta {
         display: none;
+      }
+
+      .map-app-disaster-switcher {
+        flex: 1;
+      }
+
+      .map-app-disaster-switcher label {
+        display: none;
+      }
+
+      .map-app-disaster-switcher select {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
       }
 
       .map-app-topbar-actions .map-app-bar-link span {
@@ -827,6 +1379,10 @@
 
       .leaflet-top.leaflet-right {
         top: 60px;
+      }
+
+      .map-toast {
+        bottom: calc(44px + 1rem);
       }
     }
   </style>
@@ -837,6 +1393,40 @@
   <div class="map-app" id="map-app">
 
     <div id="disaster-map" class="map-app-map"></div>
+
+    <section class="map-quick-panel" id="map-quick-panel" aria-label="クイックレイヤー切替">
+      <button
+        type="button"
+        class="map-quick-toggle"
+        id="map-quick-toggle"
+        aria-controls="map-quick-body"
+        aria-expanded="true"
+      >
+        <i class="fas fa-layer-group" aria-hidden="true"></i>
+        <span>レイヤー</span>
+        <i class="fas fa-chevron-up map-quick-chevron" aria-hidden="true"></i>
+      </button>
+      <div class="map-quick-body" id="map-quick-body">
+        <div class="map-quick-layers">
+          <label><input type="checkbox" data-quick-layer="municipalities"> 行政区域</label>
+          <label><input type="checkbox" data-quick-layer="shelters"> 避難所</label>
+          <label><input type="checkbox" data-quick-layer="roads"> 道路規制</label>
+          <label><input type="checkbox" data-quick-layer="waste_sites"> 仮置場</label>
+          <label><input type="checkbox" data-quick-layer="volunteer_centers"> ボランティア</label>
+        </div>
+        <div class="map-quick-legend" id="map-quick-legend" aria-live="polite"></div>
+        <div class="map-quick-actions">
+          <button type="button" class="map-quick-action" id="map-geolocate-button">
+            <i class="fas fa-location-arrow" aria-hidden="true"></i> 現在地へ
+          </button>
+          <button type="button" class="map-quick-action" id="map-share-quick-button">
+            <i class="fas fa-link" aria-hidden="true"></i> 共有
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="map-toast" id="map-toast" role="status" aria-live="polite" hidden></div>
 
     @if ($disaster->localGovernments->isEmpty())
       <div class="map-app-empty">
@@ -856,16 +1446,41 @@
       <div class="map-app-title">
         <div class="map-app-title-name">{{ $disaster->name }}</div>
         <div class="map-app-title-meta">
+          <span class="map-app-phase-badge is-{{ $disasterPhase['class'] }}">{{ $disasterPhase['label'] }}</span>
           @if (filled($disaster->event_date))
-            {{ $disaster->event_date }}
+            <span class="mx-1">/</span>{{ $disaster->event_date }}
           @endif
           @if (filled($disaster->npo_col_2))
             <span class="mx-1">/</span>{{ $disaster->npo_col_2 }}
           @endif
+          @if ($latestUpdatedAt)
+            <span class="map-app-last-updated">最終更新 {{ $latestUpdatedAt->format('Y/m/d H:i') }}</span>
+          @endif
         </div>
       </div>
 
+      <div class="map-app-disaster-switcher">
+        <label for="disaster-switcher">災害切替</label>
+        <select
+          id="disaster-switcher"
+          aria-label="災害を切り替え"
+          onchange="if (this.value) { window.location.href = '{{ url('/disasters') }}/' + encodeURIComponent(this.value); }"
+        >
+          @if (!$disasterOptions->contains('id', $disaster->id))
+            <option value="{{ $disaster->id }}" selected disabled>{{ $disaster->name }}（現在の災害）</option>
+          @endif
+          @foreach ($disasterOptions as $option)
+            <option value="{{ $option['id'] }}" @selected($option['id'] === $disaster->id)>
+              {{ $option['name'] }}@if (filled($option['event_date']))（{{ $option['event_date'] }}）@endif
+            </option>
+          @endforeach
+        </select>
+      </div>
+
       <div class="map-app-topbar-actions">
+        <button type="button" class="map-app-bar-link" id="map-share-button" aria-label="現在の表示状態のURLをコピー">
+          <i class="fas fa-link"></i><span>表示を共有</span>
+        </button>
         @auth
           @if (auth()->user()->isAdmin())
             <a href="{{ route('disasters.index') }}" class="map-app-bar-link">
@@ -885,6 +1500,9 @@
           <a href="{{ route('terms') }}" class="map-app-bar-link">
             <i class="fas fa-file-alt"></i><span>利用規約</span>
           </a>
+          <a href="{{ route('privacy') }}" class="map-app-bar-link">
+            <i class="fas fa-user-shield"></i><span>プライバシー</span>
+          </a>
           <a href="{{ route('login') }}" class="map-app-bar-link">
             <i class="fas fa-sign-in-alt"></i><span>ログイン</span>
           </a>
@@ -897,11 +1515,18 @@
       </div>
     </header>
 
-    <aside class="map-app-sidebar" id="map-sidebar" aria-label="災害情報メニュー">
+    <aside class="map-app-sidebar" id="map-sidebar" aria-label="災害情報メニュー" data-sheet-state="minimized">
+      <div class="map-sheet-handle" id="map-sheet-handle" role="button" tabindex="0" aria-label="パネルの高さを変更">
+        <span></span>
+      </div>
       <div class="map-app-sidebar-header">
         <div class="map-app-sidebar-eyebrow">災害情報</div>
         <h1 class="map-app-sidebar-title">{{ $disaster->name }}</h1>
         <div class="map-app-sidebar-meta">
+          <span class="map-app-phase-badge is-{{ $disasterPhase['class'] }}">{{ $disasterPhase['label'] }}</span>
+          @if ($latestUpdatedAt)
+            <span class="badge badge-light border">最終更新 {{ $latestUpdatedAt->format('Y/m/d H:i') }}</span>
+          @endif
           @if ($disaster->is_catastrophic_disaster)
             <span class="badge badge-danger">激甚災害</span>
           @endif
@@ -917,14 +1542,26 @@
         </button>
       </div>
 
+      <div class="map-app-presets" aria-label="利用目的別の表示プリセット">
+        <button type="button" class="map-app-preset" data-map-preset="resident" aria-pressed="false">
+          <i class="fas fa-house-damage" aria-hidden="true"></i> 被災住民
+        </button>
+        <button type="button" class="map-app-preset" data-map-preset="volunteer" aria-pressed="false">
+          <i class="fas fa-hands-helping" aria-hidden="true"></i> ボランティア・支援
+        </button>
+        <button type="button" class="map-app-preset" data-map-preset="analysis" aria-pressed="false">
+          <i class="fas fa-chart-bar" aria-hidden="true"></i> 調査・分析
+        </button>
+      </div>
+
       <div class="map-app-tabs" role="tablist" aria-label="表示切替">
         <button type="button" class="map-app-tab is-active" data-map-panel="detail" role="tab" aria-selected="true">
           災害情報
         </button>
         <button type="button" class="map-app-tab" data-map-panel="news" role="tab" aria-selected="false">
           最新情報
-          @if ($disaster->informationLinks->isNotEmpty())
-            <span class="map-app-tab-count">{{ $disaster->informationLinks->count() }}</span>
+          @if ($disaster->informationLinks->isNotEmpty() || ($topInformation ?? collect())->isNotEmpty() || ($wasteNotices ?? collect())->isNotEmpty())
+            <span class="map-app-tab-count">{{ $disaster->informationLinks->count() + ($topInformation ?? collect())->count() + ($wasteNotices ?? collect())->count() }}</span>
           @endif
         </button>
         <button type="button" class="map-app-tab" data-map-panel="population" role="tab" aria-selected="false">
@@ -961,16 +1598,47 @@
                 @endforelse
               </dd>
             </div>
-            <div class="map-app-detail-row">
+            <div class="map-app-detail-row map-app-detail-row-municipalities">
               <dt>市町村</dt>
               <dd>
-                @forelse ($disaster->localGovernments as $localGovernment)
-                  <span class="badge badge-light border">
-                    {{ $localGovernment->prefecture->name }} {{ $localGovernment->name }}
-                  </span>
-                @empty
+                @if ($disaster->localGovernments->isEmpty())
                   <span class="text-muted">未登録</span>
-                @endforelse
+                @else
+                  <div class="map-municipality-filter">
+                    <label class="sr-only" for="municipality-search">市町村名で絞り込む</label>
+                    <input
+                      type="search"
+                      id="municipality-search"
+                      class="form-control form-control-sm"
+                      placeholder="市町村名で絞り込む"
+                      autocomplete="off"
+                    >
+                  </div>
+                  <div id="municipality-list" class="map-municipality-list">
+                    @foreach ($disaster->localGovernments->groupBy(fn ($localGovernment) => $localGovernment->prefecture->name) as $prefectureName => $municipalities)
+                      <details class="map-municipality-group" open>
+                        <summary>
+                          {{ $prefectureName }}
+                          <span>{{ $municipalities->count() }}市町村</span>
+                        </summary>
+                        <div class="map-municipality-tags">
+                          @foreach ($municipalities as $localGovernment)
+                            <button
+                              type="button"
+                              class="map-municipality-tag"
+                              data-municipality-code="{{ substr((string) $localGovernment->code, 0, 5) }}"
+                              aria-pressed="false"
+                              title="{{ $localGovernment->prefecture->name }} {{ $localGovernment->name }}"
+                            >
+                              {{ $localGovernment->name }}
+                            </button>
+                          @endforeach
+                        </div>
+                      </details>
+                    @endforeach
+                    <p class="map-municipality-empty" id="municipality-empty" hidden>該当する市町村がありません。</p>
+                  </div>
+                @endif
               </dd>
             </div>
             <div class="map-app-detail-row">
@@ -985,9 +1653,33 @@
             </div>
           </dl>
 
+          <section class="map-app-digest" aria-labelledby="map-app-digest-title">
+            <div class="map-app-digest-head">
+              <strong id="map-app-digest-title">最新情報</strong>
+              <button type="button" class="map-app-digest-more" data-map-panel-link="news">すべて見る</button>
+            </div>
+            @forelse ($digestItems as $digestItem)
+              <button
+                type="button"
+                class="map-app-digest-item"
+                data-map-panel-link="news"
+                data-focus-target="{{ $digestItem['target'] }}"
+              >
+                <span class="map-app-digest-type">{{ $digestItem['type'] }}</span>
+                <span class="map-app-digest-title">{{ $digestItem['title'] }}</span>
+                <span class="map-app-digest-date">{{ $digestItem['date'] ? $digestItem['date']->format('Y/m/d H:i') : '' }}</span>
+              </button>
+            @empty
+              <p class="map-app-digest-empty">最新情報はまだありません。</p>
+            @endforelse
+          </section>
+
           <div class="map-app-actions">
             <a href="{{ route('disasters.intelligence', ['disaster' => $disaster->id]) }}" class="btn btn-outline-primary">
               <i class="fas fa-truck-ramp-box"></i> 専門支援情報
+            </a>
+            <a href="{{ route('disasters.sources', ['disaster' => $disaster->id]) }}" class="btn btn-outline-secondary">
+              <i class="fas fa-book-open"></i> データ出典
             </a>
             @auth
               @if (auth()->user()->isAdmin())
@@ -1019,14 +1711,53 @@
         </section>
 
         <section class="map-app-panel" data-map-panel-content="news" role="tabpanel" hidden>
+          @php($announcements = $topInformation ?? collect())
+          @if ($announcements->isNotEmpty())
+            @foreach ($announcements as $item)
+              <article class="map-app-news-item" id="news-announcement-{{ $item->id }}">
+                <div class="map-app-news-meta">お知らせ: {{ $item->published_at?->format('Y/m/d') }}</div>
+                <p class="font-weight-bold">{{ $item->title }}</p>
+                <p>{{ \Illuminate\Support\Str::limit(strip_tags($item->content ?? ''), 200) }}</p>
+              </article>
+            @endforeach
+            <hr>
+          @endif
+          @if (($wasteNotices ?? collect())->isNotEmpty())
+            @foreach ($wasteNotices as $wasteNotice)
+              @php($noticeDate = $wasteNotice->closed_at ?? $wasteNotice->last_verified_at ?? $wasteNotice->updated_at)
+              @php($noticeUrl = $wasteNotice->status_source_url ?: $wasteNotice->source_url)
+              <article class="map-app-news-item" id="news-waste-{{ $wasteNotice->id }}">
+                <div class="map-app-news-meta">
+                  仮置場の受入終了{{ $noticeDate ? ': ' . $noticeDate->format('Y/m/d') : '' }}
+                </div>
+                <p class="font-weight-bold">{{ $wasteNotice->name }}</p>
+                @if ($wasteNotice->status_evidence)
+                  <p>{{ \Illuminate\Support\Str::limit($wasteNotice->status_evidence, 200) }}</p>
+                @endif
+                @if ($noticeUrl)
+                  <a href="{{ $noticeUrl }}" target="_blank" rel="noopener noreferrer">
+                    {{ $noticeUrl }}
+                  </a>
+                @endif
+              </article>
+            @endforeach
+            <hr>
+          @endif
+          <div class="text-muted small mb-2">
+            最終収集日:
+            {{ ($dataCollectionDates['information'] ?? null) ? $dataCollectionDates['information']->format('Y/m/d H:i') : '未収集' }}
+          </div>
           @forelse ($disaster->informationLinks as $informationLink)
-            <article class="map-app-news-item">
+            <article class="map-app-news-item" id="news-link-{{ $informationLink->id }}">
               @if ($informationLink->fetched_at)
                 <div class="map-app-news-meta">取得日時: {{ $informationLink->fetched_at->format('Y/m/d H:i') }}</div>
               @elseif ($informationLink->updated_at)
                 <div class="map-app-news-meta">登録日時: {{ $informationLink->updated_at->format('Y/m/d H:i') }}</div>
               @endif
               <p>{{ $informationLink->description }}</p>
+              @if ($informationLink->fetched_at && $informationLink->fetched_at->lt(now()->subMonth()))
+                <div><span class="badge badge-warning">1か月以上経過</span></div>
+              @endif
               <a href="{{ $informationLink->url }}" target="_blank" rel="noopener noreferrer">
                 {{ $informationLink->url }}
               </a>
@@ -1049,6 +1780,9 @@
                 <strong>道路規制</strong>
                 <span id="support-road-count">読み込み中...</span>
               </div>
+              <div class="text-muted small mb-2">
+                最終収集日: {{ ($dataCollectionDates['roads'] ?? null) ? $dataCollectionDates['roads']->format('Y/m/d H:i') : '未収集' }}
+              </div>
               <div id="support-road-list" class="support-list">
                 <p class="support-empty">道路規制を読み込んでいます...</p>
               </div>
@@ -1059,6 +1793,9 @@
                 <strong>災害廃棄物・仮置場</strong>
                 <span id="support-waste-count">読み込み中...</span>
               </div>
+              <div class="text-muted small mb-2">
+                最終収集日: {{ ($dataCollectionDates['waste_sites'] ?? null) ? $dataCollectionDates['waste_sites']->format('Y/m/d H:i') : '未収集' }}
+              </div>
               <div id="support-waste-list" class="support-list">
                 <p class="support-empty">仮置場情報を読み込んでいます...</p>
               </div>
@@ -1068,6 +1805,9 @@
               <div class="support-section-header">
                 <strong>議事録サマリ</strong>
                 <span id="support-meeting-count">読み込み中...</span>
+              </div>
+              <div class="text-muted small mb-2">
+                最終収集日: {{ ($dataCollectionDates['meeting_insights'] ?? null) ? $dataCollectionDates['meeting_insights']->format('Y/m/d H:i') : '未収集' }}
               </div>
               <div id="support-meeting-list" class="support-list">
                 <p class="support-empty">議事録を読み込んでいます...</p>
@@ -1193,6 +1933,7 @@
       const sidebarToggle = document.getElementById('sidebar-toggle');
       const sidebarClose = document.getElementById('sidebar-close');
       const sidebarStorageKey = 'disaster-map-sidebar-open';
+      let mobileSheetState = 'minimized';
 
       function setSidebarOpen(open, persist) {
         if (!sidebar) {
@@ -1208,6 +1949,10 @@
 
         if (sidebarToggle) {
           sidebarToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        if (isMobileViewport()) {
+          setSheetState(open ? 'half' : 'minimized');
         }
 
         if (persist) {
@@ -1367,6 +2112,10 @@
       }
 
       const municipalities = @json($mapMunicipalities);
+      const municipalityBoundaries = new Map();
+      const municipalityByCode = new Map(municipalities.map(function (municipality) {
+        return [String(municipality.code), municipality];
+      }));
       const schoolDistrictUrlTemplate = @json($schoolDistrictUrlTemplate);
       const historicalUrlTemplate = @json($historicalUrlTemplate);
       const populationUrl = @json(route('disasters.population', ['disaster' => $disaster->id]));
@@ -1473,6 +2222,7 @@
       const layerStorageKey = 'disaster-map-layer-visibility';
       const shelterActiveOnlyStorageKey = 'disaster-map-shelter-active-only';
       let mapViewInitialized = false;
+      let viewLocked = false;
 
       function loadLayerVisibility() {
         try {
@@ -1562,6 +2312,10 @@
       }
 
       function fitMapToVisibleLayers() {
+        if (viewLocked) {
+          return;
+        }
+
         const bounds = L.latLngBounds([]);
 
         Object.keys(layers).forEach(function (name) {
@@ -1816,14 +2570,31 @@
                   return response.json();
                 })
                 .then(function (geojson) {
-                  L.geoJSON(geojson, {
+                  const boundaryGroup = L.geoJSON(geojson, {
                     style: layerStyle('municipalities'),
                     onEachFeature: function (feature, layer) {
+                      layer.saizMunicipalityCode = String(municipality.code);
+                      layer.saizBaseStyle = layerStyle('municipalities');
+
+                      if (!municipalityBoundaries.has(String(municipality.code))) {
+                        municipalityBoundaries.set(String(municipality.code), []);
+                      }
+
+                      municipalityBoundaries.get(String(municipality.code)).push(layer);
+
                       layer.on('click', function () {
-                        highlightBoundary(layer);
+                        selectMunicipality(String(municipality.code), true);
+                      });
+                      layer.on('mouseover', function () {
+                        setMunicipalityHover(String(municipality.code));
+                      });
+                      layer.on('mouseout', function () {
+                        clearMunicipalityHover(String(municipality.code));
                       });
                     }
-                  }).addTo(layers.municipalities);
+                  });
+
+                  boundaryGroup.addTo(layers.municipalities);
                 })
                 .catch(function () {
                   // 取得できない区域はスキップする
@@ -2100,6 +2871,10 @@
             }
 
             centers.forEach(function (center) {
+              if (center.activity_status === 'closed') {
+                return;
+              }
+
               const latitude = Number(center.latitude);
               const longitude = Number(center.longitude);
 
@@ -2118,6 +2893,30 @@
               const type = document.createElement('div');
               type.textContent = '災害ボランティアセンター';
               popup.appendChild(type);
+
+              const activity = document.createElement('div');
+              if (center.activity_status === 'open') {
+                activity.textContent = '活動状況: 開設中';
+                activity.style.color = '#28a745';
+                activity.style.fontWeight = 'bold';
+              } else {
+                activity.textContent = '活動状況: 未確認';
+                activity.style.color = '#6c757d';
+              }
+              popup.appendChild(activity);
+
+              if (center.status_note) {
+                const statusNote = document.createElement('div');
+                statusNote.textContent = center.status_note;
+                popup.appendChild(statusNote);
+              }
+
+              if (center.status_checked_at) {
+                const statusChecked = document.createElement('div');
+                statusChecked.style.color = '#6c757d';
+                statusChecked.textContent = '状況確認: ' + new Date(center.status_checked_at).toLocaleString('ja-JP');
+                popup.appendChild(statusChecked);
+              }
 
               if (center.address) {
                 const address = document.createElement('div');
@@ -2215,7 +3014,11 @@
       const supportRoadLayers = new Map();
       const supportWasteLayers = new Map();
 
-      function roadTypeMeta(type) {
+      function roadTypeMeta(type, status) {
+        if (status === 'open') {
+          return { label: '解除済み', color: '#198754', guidance: '通行止めは解除されています。最新情報を確認してください。' };
+        }
+
         return {
           full_closure: { label: '全面通行止', color: '#dc3545', guidance: 'この区間は通行できません。迂回路を確認してください。' },
           alternating: { label: '片側交互通行', color: '#fd7e14', guidance: '片側交互で通行できます。現地の誘導に従ってください。' },
@@ -2254,9 +3057,33 @@
           + '</div>';
       }
 
+      function staleBadge(properties, source) {
+        const value = source && source.published_at
+          ? source.published_at
+          : (properties.updated_at || properties.last_verified_at);
+
+        if (!value) {
+          return '';
+        }
+
+        const timestamp = new Date(value).getTime();
+
+        if (Number.isNaN(timestamp)) {
+          return '';
+        }
+
+        const threshold = new Date();
+        threshold.setMonth(threshold.getMonth() - 1);
+
+        return timestamp < threshold.getTime()
+          ? '<span class="badge badge-warning ml-1">1か月以上経過</span>'
+          : '';
+      }
+
       function roadPopup(properties) {
-        const meta = roadTypeMeta(properties.regulation_type);
+        const meta = roadTypeMeta(properties.regulation_type, properties.status);
         const root = document.createElement('div');
+        const stale = staleBadge(properties, properties.source);
 
         root.innerHTML = '<strong>' + escapeHtml(properties.road_name || '道路規制') + '</strong>'
           + '<div style="margin:0.3rem 0;"><span class="support-badge" style="background:' + meta.color + '">' + escapeHtml(meta.label) + '</span></div>'
@@ -2265,6 +3092,7 @@
           + '<div><strong>対象車両:</strong> ' + escapeHtml(vehicleLabels(properties.vehicle_classes)) + '</div>'
           + '<div><strong>事由:</strong> ' + escapeHtml(properties.reason || '不明') + '</div>'
           + '<div class="support-item-meta">信頼度: ' + escapeHtml(properties.confidence_rank || 'C') + '</div>'
+          + (stale ? '<div>' + stale + '</div>' : '')
           + sourceHtml(properties)
           + '<div class="support-item-meta" style="color:#b02a37;margin-top:0.35rem;">' + escapeHtml(properties.disclaimer || '出典の一次情報を確認してください。') + '</div>';
 
@@ -2397,14 +3225,15 @@
         list.innerHTML = '';
         supportRoadFeatures.forEach(function (feature) {
           const properties = feature.properties || {};
-          const meta = roadTypeMeta(properties.regulation_type);
+          const meta = roadTypeMeta(properties.regulation_type, properties.status);
           const button = document.createElement('button');
           button.type = 'button';
           button.className = 'support-item';
           button.innerHTML = '<span class="support-badge" style="background:' + meta.color + '">' + escapeHtml(meta.label) + '</span>'
             + '<span class="support-item-name">' + escapeHtml(properties.road_name || '道路名不明') + '</span>'
             + '<span class="support-item-meta">' + escapeHtml(properties.section || '区間不明') + '</span>'
-            + '<span class="support-item-meta">対象: ' + escapeHtml(vehicleLabels(properties.vehicle_classes)) + '</span>';
+            + '<span class="support-item-meta">対象: ' + escapeHtml(vehicleLabels(properties.vehicle_classes)) + '</span>'
+            + staleBadge(properties, properties.source);
           button.addEventListener('click', function () {
             focusSupportFeature('roads', properties.id, supportRoadLayers);
           });
@@ -2439,7 +3268,8 @@
           button.innerHTML = '<span class="support-badge" style="background:' + meta.color + '">' + escapeHtml(meta.label) + '</span>'
             + '<span class="support-item-name">' + escapeHtml(properties.name || '仮置場名不明') + '</span>'
             + '<span class="support-item-meta">受入: ' + escapeHtml((properties.accepted_items || []).join('、') || '不明') + '</span>'
-            + '<span class="support-item-meta">車両: ' + escapeHtml(properties.vehicle_limit || (properties.max_payload_tons ? properties.max_payload_tons + 'tまで' : '不明')) + '</span>';
+            + '<span class="support-item-meta">車両: ' + escapeHtml(properties.vehicle_limit || (properties.max_payload_tons ? properties.max_payload_tons + 'tまで' : '不明')) + '</span>'
+            + staleBadge(properties, properties.source);
           button.addEventListener('click', function () {
             focusSupportFeature('waste_sites', properties.id, supportWasteLayers);
           });
@@ -2487,6 +3317,7 @@
         list.innerHTML = supportMeetingItems.map(function (meeting) {
           const source = meeting.source || {};
           const heldAt = meeting.held_at ? new Date(meeting.held_at).toLocaleString('ja-JP') : '日時不明';
+          const stale = staleBadge(meeting, source);
           const blocks = meetingBlock('決定事項', meeting.decisions)
             + meetingBlock('方針転換・撤収予定', meeting.policy_changes)
             + meetingBlock('未充足ニーズ・支援の空白', meeting.unmet_needs);
@@ -2494,6 +3325,7 @@
           return '<article class="support-meeting">'
             + '<span class="support-meeting-title">' + escapeHtml(meeting.meeting_name || '会議名不明') + '</span>'
             + '<span class="support-item-meta">' + escapeHtml(heldAt) + (source.org ? ' / ' + escapeHtml(source.org) : '') + '</span>'
+            + stale
             + (blocks || '<div class="support-item-meta">抽出された決定事項・ニーズはありません。</div>')
             + '<div class="support-meeting-source">出典: ' + escapeHtml(source.org || '不明')
             + (source.url ? '<br><a href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener noreferrer">一次資料を開く</a>' : '')
@@ -2546,11 +3378,11 @@
 
             const geoLayer = L.geoJSON(data, {
               style: function (feature) {
-                const meta = roadTypeMeta(feature.properties.regulation_type);
+                const meta = roadTypeMeta(feature.properties.regulation_type, feature.properties.status);
                 return { color: meta.color, weight: 5, opacity: 0.95, lineCap: 'round' };
               },
               pointToLayer: function (feature, latlng) {
-                const meta = roadTypeMeta(feature.properties.regulation_type);
+                const meta = roadTypeMeta(feature.properties.regulation_type, feature.properties.status);
                 return L.circleMarker(latlng, {
                   radius: 8,
                   color: '#fff',
@@ -3132,7 +3964,7 @@
         });
       }
 
-      loadMunicipalitiesLayer();
+      const municipalitiesReady = loadMunicipalitiesLayer();
 
       document.querySelectorAll('.map-layer-toggle').forEach(function (toggle) {
         const name = toggle.dataset.layer;
@@ -3166,6 +3998,784 @@
           }, 100);
         });
       });
+
+      // --- UI state, URL sharing, presets, quick layers, municipality links ---
+      const state = {
+        panel: 'detail',
+        layers: {},
+        selectedMunicipality: null,
+        hoveredMunicipality: null
+      };
+      const initialParams = new URLSearchParams(window.location.search);
+      const layerNames = Object.keys(layers);
+      const presetDefinitions = {
+        resident: {
+          layers: ['municipalities', 'shelters', 'roads'],
+          tab: 'detail'
+        },
+        volunteer: {
+          layers: ['municipalities', 'volunteer_centers', 'waste_sites', 'roads'],
+          tab: 'support'
+        },
+        analysis: {
+          layers: ['municipalities', 'small_areas'],
+          tab: 'population'
+        }
+      };
+      let urlReady = false;
+      let applyingPreset = false;
+      let pendingMunicipalityFit = null;
+      let toastTimer = null;
+
+      function isMobileViewport() {
+        return window.matchMedia('(max-width: 767.98px)').matches;
+      }
+
+      function setSheetState(nextState, persist) {
+        if (!sidebar) {
+          return;
+        }
+
+        if (!isMobileViewport()) {
+          const open = sidebar.classList.contains('is-open');
+          sidebar.removeAttribute('data-sheet-state');
+          sidebar.setAttribute('aria-hidden', open ? 'false' : 'true');
+
+          if (open) {
+            sidebar.removeAttribute('inert');
+          } else {
+            sidebar.setAttribute('inert', '');
+          }
+
+          document.querySelectorAll('.map-app-sidebar-header, .map-app-presets, .map-app-tabs, .map-app-sidebar-body').forEach(function (element) {
+            element.removeAttribute('inert');
+          });
+          return;
+        }
+
+        mobileSheetState = ['minimized', 'half', 'full'].indexOf(nextState) >= 0 ? nextState : 'minimized';
+        sidebar.dataset.sheetState = mobileSheetState;
+
+        const open = mobileSheetState !== 'minimized';
+        sidebar.classList.toggle('is-open', open);
+        sidebar.removeAttribute('inert');
+        sidebar.setAttribute('aria-hidden', 'false');
+        sidebarToggle && sidebarToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+        document.querySelectorAll('.map-app-sidebar-header, .map-app-presets, .map-app-tabs, .map-app-sidebar-body').forEach(function (element) {
+          if (open) {
+            element.removeAttribute('inert');
+          } else {
+            element.setAttribute('inert', '');
+          }
+        });
+
+        if (persist) {
+          try {
+            window.localStorage.setItem(sidebarStorageKey, open ? '1' : '0');
+          } catch (error) {
+          }
+        }
+      }
+
+      function showToast(message) {
+        const toast = document.getElementById('map-toast');
+
+        if (!toast) {
+          return;
+        }
+
+        toast.textContent = message;
+        toast.hidden = false;
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(function () {
+          toast.hidden = true;
+        }, 3200);
+      }
+
+      function syncLayerUi() {
+        state.layers = {};
+
+        document.querySelectorAll('.map-layer-toggle').forEach(function (toggle) {
+          state.layers[toggle.dataset.layer] = toggle.checked;
+        });
+
+        document.querySelectorAll('[data-quick-layer]').forEach(function (checkbox) {
+          checkbox.checked = Boolean(state.layers[checkbox.dataset.quickLayer]);
+        });
+
+        if (!applyingPreset) {
+          document.querySelectorAll('[data-map-preset]').forEach(function (button) {
+            button.setAttribute('aria-pressed', 'false');
+          });
+        }
+
+        updateQuickLegend();
+        syncUrl();
+      }
+
+      function setLayerEnabled(name, enabled, options) {
+        const toggles = document.querySelectorAll('.map-layer-toggle[data-layer="' + name + '"]');
+
+        if (toggles.length === 0) {
+          return Promise.resolve();
+        }
+
+        let changed = false;
+
+        toggles.forEach(function (toggle) {
+          if (toggle.checked !== enabled) {
+            toggle.checked = enabled;
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          toggles[0].dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+          syncLayerUi();
+        }
+
+        return Promise.resolve();
+      }
+
+      function updateQuickLegend() {
+        const container = document.getElementById('map-quick-legend');
+
+        if (!container) {
+          return;
+        }
+
+        const legend = {
+          municipalities: [
+            { label: '市町村境', color: '#1f3c88', line: true }
+          ],
+          shelters: [
+            { label: '開設中', color: '#dc3545' },
+            { label: '指定避難所', color: '#17a2b8' },
+            { label: '指定緊急避難場所', color: '#fd7e14' }
+          ],
+          roads: [
+            { label: '全面通行止', color: '#dc3545', line: true },
+            { label: '片側交互通行', color: '#fd7e14', line: true },
+            { label: '大型・重量規制', color: '#6f42c1', line: true }
+          ],
+          waste_sites: [
+            { label: '仮置場', color: '#198754' }
+          ],
+          volunteer_centers: [
+            { label: 'ボランティアセンター', color: '#28a745' }
+          ],
+          small_areas: [
+            { label: '小区域界', color: '#adb5bd', line: true }
+          ],
+          elementary: [
+            { label: '小学校区', color: '#fd7e14', line: true }
+          ],
+          junior_high: [
+            { label: '中学校区', color: '#6f42c1', line: true }
+          ],
+          historical: [
+            { label: '合併前行政界', color: '#495057', line: true }
+          ]
+        };
+        const labels = {
+          municipalities: '行政区域',
+          shelters: '避難所',
+          roads: '道路規制',
+          waste_sites: '仮置場',
+          volunteer_centers: 'ボランティア',
+          small_areas: '小区域',
+          elementary: '小学校区',
+          junior_high: '中学校区',
+          historical: '合併前行政界'
+        };
+        const rows = [];
+
+        Object.keys(legend).forEach(function (name) {
+          if (!state.layers[name]) {
+            return;
+          }
+
+          legend[name].forEach(function (item) {
+            rows.push(
+              '<div class="map-quick-legend-row">'
+              + '<span class="map-quick-legend-swatch' + (item.line ? ' is-line' : '') + '" style="background:' + item.color + '"></span>'
+              + '<span>' + escapeHtml(labels[name] + '：' + item.label) + '</span>'
+              + '</div>'
+            );
+          });
+        });
+
+        container.innerHTML = rows.length > 0
+          ? rows.join('')
+          : '<div class="map-quick-legend-empty">表示中の主要レイヤーはありません。</div>';
+      }
+
+      function syncUrl() {
+        if (!urlReady || !mapViewInitialized) {
+          return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const center = map.getCenter();
+
+        params.set('lat', center.lat.toFixed(5));
+        params.set('lng', center.lng.toFixed(5));
+        params.set('z', String(map.getZoom()));
+
+        const enabledLayers = layerNames.filter(function (name) {
+          return Boolean(state.layers[name]);
+        });
+
+        params.set('layers', enabledLayers.join(','));
+        params.set('tab', state.panel);
+
+        if (state.selectedMunicipality) {
+          params.set('m', state.selectedMunicipality);
+        } else {
+          params.delete('m');
+        }
+
+        const query = params.toString();
+        const url = window.location.pathname + (query ? '?' + query : '') + window.location.hash;
+        window.history.replaceState(null, '', url);
+      }
+
+      function copyCurrentUrl() {
+        syncUrl();
+
+        const url = window.location.href;
+        const onCopied = function () {
+          showToast('表示状態のURLをコピーしました。');
+        };
+        const fallback = function () {
+          const textarea = document.createElement('textarea');
+          textarea.value = url;
+          textarea.setAttribute('readonly', '');
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+
+          try {
+            document.execCommand('copy');
+            onCopied();
+          } catch (error) {
+            showToast('URLをコピーできませんでした。');
+          }
+
+          document.body.removeChild(textarea);
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(url).then(onCopied).catch(fallback);
+        } else {
+          fallback();
+        }
+      }
+
+      function municipalityLayers(code) {
+        return municipalityBoundaries.get(String(code)) || [];
+      }
+
+      function municipalityBounds(code) {
+        const bounds = L.latLngBounds([]);
+
+        municipalityLayers(code).forEach(function (boundary) {
+          if (boundary.getBounds) {
+            bounds.extend(boundary.getBounds());
+          }
+        });
+
+        return bounds;
+      }
+
+      function refreshMunicipalityStyles() {
+        municipalityBoundaries.forEach(function (boundaryLayers, code) {
+          const mode = code === state.selectedMunicipality
+            ? 'selected'
+            : (code === state.hoveredMunicipality ? 'hover' : 'base');
+
+          boundaryLayers.forEach(function (boundary) {
+            if (!boundary.setStyle) {
+              return;
+            }
+
+            if (mode === 'selected') {
+              boundary.setStyle({
+                color: '#b02a37',
+                weight: 4,
+                opacity: 1,
+                fillColor: '#b02a37',
+                fillOpacity: 0.12,
+                dashArray: null
+              });
+            } else if (mode === 'hover') {
+              boundary.setStyle({
+                color: '#17a2b8',
+                weight: 3,
+                opacity: 1,
+                fillColor: '#17a2b8',
+                fillOpacity: 0.18,
+                dashArray: null
+              });
+            } else {
+              boundary.setStyle(boundary.saizBaseStyle || layerStyle('municipalities'));
+            }
+
+            if (mode !== 'base' && boundary.bringToFront) {
+              boundary.bringToFront();
+            }
+          });
+        });
+
+        document.querySelectorAll('.map-municipality-tag').forEach(function (tag) {
+          const code = tag.dataset.municipalityCode;
+          tag.classList.toggle('is-selected', code === state.selectedMunicipality);
+          tag.classList.toggle('is-hovered', code === state.hoveredMunicipality);
+          tag.setAttribute('aria-pressed', code === state.selectedMunicipality ? 'true' : 'false');
+        });
+      }
+
+      function setMunicipalityHover(code) {
+        state.hoveredMunicipality = code;
+        refreshMunicipalityStyles();
+      }
+
+      function clearMunicipalityHover(code) {
+        if (state.hoveredMunicipality === code) {
+          state.hoveredMunicipality = null;
+          refreshMunicipalityStyles();
+        }
+      }
+
+      function selectMunicipality(code, fit) {
+        if (!code) {
+          return;
+        }
+
+        state.selectedMunicipality = String(code);
+        clearBoundaryHighlight();
+        refreshMunicipalityStyles();
+
+        if (fit) {
+          const bounds = municipalityBounds(code);
+
+          if (bounds.isValid()) {
+            viewLocked = false;
+            map.fitBounds(bounds, {
+              padding: [40, 40],
+              maxZoom: 15,
+              animate: true,
+              duration: 0.6
+            });
+          } else {
+            pendingMunicipalityFit = String(code);
+          }
+        }
+
+        syncUrl();
+      }
+
+      function filterMunicipalityList() {
+        const input = document.getElementById('municipality-search');
+        const empty = document.getElementById('municipality-empty');
+        const query = input ? input.value.trim().toLowerCase() : '';
+        let visibleTotal = 0;
+
+        document.querySelectorAll('.map-municipality-group').forEach(function (group) {
+          let visible = 0;
+
+          group.querySelectorAll('.map-municipality-tag').forEach(function (tag) {
+            const matches = query === '' || tag.textContent.toLowerCase().indexOf(query) >= 0;
+            tag.hidden = !matches;
+
+            if (matches) {
+              visible++;
+            }
+          });
+
+          group.hidden = visible === 0;
+          visibleTotal += visible;
+        });
+
+        if (empty) {
+          empty.hidden = visibleTotal > 0;
+        }
+      }
+
+      function applyPreset(name) {
+        const preset = presetDefinitions[name];
+
+        if (!preset) {
+          return;
+        }
+
+        applyingPreset = true;
+        viewLocked = true;
+
+        layerNames.forEach(function (layerName) {
+          setLayerEnabled(layerName, preset.layers.indexOf(layerName) >= 0);
+        });
+
+        applyingPreset = false;
+        viewLocked = false;
+
+        document.querySelectorAll('[data-map-preset]').forEach(function (button) {
+          button.setAttribute('aria-pressed', button.dataset.mapPreset === name ? 'true' : 'false');
+        });
+
+        const tab = document.querySelector('[data-map-panel="' + preset.tab + '"]');
+
+        if (tab) {
+          tab.click();
+        }
+
+        window.setTimeout(function () {
+          fitMapToVisibleLayers();
+        }, 80);
+      }
+
+      function locateMe() {
+        if (!navigator.geolocation) {
+          showToast('このブラウザでは現在地を取得できません。');
+          return;
+        }
+
+        showToast('現在地を取得しています...');
+
+        navigator.geolocation.getCurrentPosition(function (position) {
+          const latlng = [position.coords.latitude, position.coords.longitude];
+
+          if (!window.saizGpsMarker) {
+            window.saizGpsMarker = L.circleMarker(latlng, {
+              radius: 8,
+              color: '#ffffff',
+              weight: 3,
+              fillColor: '#0d6efd',
+              fillOpacity: 1
+            }).addTo(map);
+          } else {
+            window.saizGpsMarker.setLatLng(latlng);
+          }
+
+          viewsafeSetView(latlng, 15);
+          showToast('現在地に移動しました。');
+        }, function () {
+          showToast('現在地を取得できませんでした。位置情報の許可を確認してください。');
+        }, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        });
+      }
+
+      function viewsafeSetView(latlng, zoom) {
+        viewLocked = false;
+        map.setView(latlng, zoom, { animate: true });
+        mapViewInitialized = true;
+        syncUrl();
+      }
+
+      document.querySelectorAll('[data-map-panel]').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          state.panel = this.dataset.mapPanel;
+
+          if (isMobileViewport() && mobileSheetState === 'minimized') {
+            setSheetState('half', false);
+          }
+
+          syncUrl();
+        });
+      });
+
+      document.querySelectorAll('[data-map-preset]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          applyPreset(this.dataset.mapPreset);
+        });
+      });
+
+      document.querySelectorAll('.map-layer-toggle').forEach(function (toggle) {
+        toggle.addEventListener('change', function () {
+          if (!applyingPreset) {
+            document.querySelectorAll('[data-map-preset]').forEach(function (button) {
+              button.setAttribute('aria-pressed', 'false');
+            });
+          }
+
+          if (!applyingPreset && urlReady) {
+            viewLocked = false;
+          }
+
+          syncLayerUi();
+        });
+      });
+
+      document.querySelectorAll('[data-quick-layer]').forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+          setLayerEnabled(this.dataset.quickLayer, this.checked);
+        });
+      });
+
+      const quickPanel = document.getElementById('map-quick-panel');
+      const quickToggle = document.getElementById('map-quick-toggle');
+
+      if (quickToggle) {
+        quickToggle.addEventListener('click', function () {
+          const collapsed = quickPanel.classList.toggle('is-collapsed');
+          quickToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        });
+      }
+
+      if (quickPanel && isMobileViewport()) {
+        quickPanel.classList.add('is-collapsed');
+        quickToggle && quickToggle.setAttribute('aria-expanded', 'false');
+      }
+
+      document.querySelectorAll('.map-municipality-tag').forEach(function (tag) {
+        const code = tag.dataset.municipalityCode;
+
+        tag.addEventListener('mouseenter', function () {
+          setMunicipalityHover(code);
+        });
+        tag.addEventListener('mouseleave', function () {
+          clearMunicipalityHover(code);
+        });
+        tag.addEventListener('focus', function () {
+          setMunicipalityHover(code);
+        });
+        tag.addEventListener('blur', function () {
+          clearMunicipalityHover(code);
+        });
+        tag.addEventListener('click', function () {
+          selectMunicipality(code, true);
+        });
+      });
+
+      const municipalitySearch = document.getElementById('municipality-search');
+
+      if (municipalitySearch) {
+        municipalitySearch.addEventListener('input', filterMunicipalityList);
+      }
+
+      document.querySelectorAll('[data-map-panel-link]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          const tab = document.querySelector('[data-map-panel="' + this.dataset.mapPanelLink + '"]');
+          const focusTarget = this.dataset.focusTarget;
+
+          if (tab) {
+            tab.click();
+          }
+
+          if (focusTarget) {
+            window.setTimeout(function () {
+              const element = document.getElementById(focusTarget);
+
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.classList.add('is-focused');
+                window.setTimeout(function () {
+                  element.classList.remove('is-focused');
+                }, 2400);
+              }
+            }, 80);
+          }
+        });
+      });
+
+      const shareButton = document.getElementById('map-share-button');
+      const shareQuickButton = document.getElementById('map-share-quick-button');
+
+      shareButton && shareButton.addEventListener('click', copyCurrentUrl);
+      shareQuickButton && shareQuickButton.addEventListener('click', copyCurrentUrl);
+
+      const geolocateButton = document.getElementById('map-geolocate-button');
+
+      if (geolocateButton) {
+        geolocateButton.addEventListener('click', locateMe);
+      }
+
+      const locateControl = L.control({ position: 'bottomright' });
+      locateControl.onAdd = function () {
+        const container = L.DomUtil.create('div', 'leaflet-bar');
+        const button = L.DomUtil.create('button', 'map-locate-button', container);
+        button.type = 'button';
+        button.title = '現在地へ移動';
+        button.setAttribute('aria-label', '現在地へ移動');
+        button.innerHTML = '<i class="fas fa-location-arrow" aria-hidden="true"></i>';
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.on(button, 'click', function (event) {
+          L.DomEvent.stop(event);
+          locateMe();
+        });
+
+        return container;
+      };
+      locateControl.addTo(map);
+
+      const sheetHandle = document.getElementById('map-sheet-handle');
+
+      if (sheetHandle) {
+        let sheetPointer = null;
+
+        sheetHandle.addEventListener('pointerdown', function (event) {
+          if (!isMobileViewport()) {
+            return;
+          }
+
+          sheetPointer = {
+            startY: event.clientY,
+            moved: false
+          };
+
+          try {
+            sheetHandle.setPointerCapture(event.pointerId);
+          } catch (error) {
+          }
+        });
+
+        sheetHandle.addEventListener('pointermove', function (event) {
+          if (!sheetPointer) {
+            return;
+          }
+
+          if (Math.abs(event.clientY - sheetPointer.startY) > 12) {
+            sheetPointer.moved = true;
+          }
+        });
+
+        sheetHandle.addEventListener('pointerup', function (event) {
+          if (!sheetPointer) {
+            return;
+          }
+
+          const delta = event.clientY - sheetPointer.startY;
+          const moved = sheetPointer.moved;
+          sheetPointer = null;
+
+          if (!moved) {
+            setSheetState(
+              mobileSheetState === 'minimized' ? 'half' : (mobileSheetState === 'half' ? 'full' : 'minimized'),
+              true
+            );
+            return;
+          }
+
+          if (delta < -40) {
+            setSheetState(
+              mobileSheetState === 'minimized' ? 'half' : 'full',
+              true
+            );
+          } else if (delta > 40) {
+            setSheetState(
+              mobileSheetState === 'full' ? 'half' : 'minimized',
+              true
+            );
+          }
+        });
+
+        sheetHandle.addEventListener('pointercancel', function () {
+          sheetPointer = null;
+        });
+
+        sheetHandle.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setSheetState(
+              mobileSheetState === 'minimized' ? 'half' : (mobileSheetState === 'half' ? 'full' : 'minimized'),
+              true
+            );
+          } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            setSheetState(mobileSheetState === 'minimized' ? 'half' : 'full', true);
+          } else if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setSheetState(mobileSheetState === 'full' ? 'half' : 'minimized', true);
+          }
+        });
+      }
+
+      window.addEventListener('resize', function () {
+        setSheetState(mobileSheetState, false);
+
+        if (!isMobileViewport()) {
+          quickPanel && quickPanel.classList.remove('is-collapsed');
+          quickToggle && quickToggle.setAttribute('aria-expanded', 'true');
+        }
+      });
+
+      map.on('moveend zoomend', function () {
+        syncUrl();
+      });
+
+      const initialMunicipality = initialParams.get('m');
+
+      municipalitiesReady.then(function () {
+        refreshMunicipalityStyles();
+
+        if (pendingMunicipalityFit) {
+          const code = pendingMunicipalityFit;
+          pendingMunicipalityFit = null;
+          selectMunicipality(code, true);
+        } else if (initialMunicipality) {
+          selectMunicipality(initialMunicipality, false);
+        }
+      });
+
+      const initialTab = initialParams.get('tab');
+
+      state.panel = document.querySelector('[data-map-panel].is-active')
+        ? document.querySelector('[data-map-panel].is-active').dataset.mapPanel
+        : 'detail';
+
+      const initialLayers = initialParams.get('layers');
+      const initialLatValue = initialParams.get('lat');
+      const initialLngValue = initialParams.get('lng');
+      const initialZoomValue = initialParams.get('z');
+      const initialLat = Number(initialLatValue);
+      const initialLng = Number(initialLngValue);
+      const initialZoom = initialZoomValue !== null && initialZoomValue !== ''
+        ? Number(initialZoomValue)
+        : 13;
+      const hasInitialView = initialLatValue !== null
+        && initialLatValue !== ''
+        && initialLngValue !== null
+        && initialLngValue !== ''
+        && Number.isFinite(initialLat)
+        && Number.isFinite(initialLng)
+        && Number.isFinite(initialZoom);
+
+      viewLocked = hasInitialView;
+
+      if (initialLayers !== null) {
+        const desiredLayers = new Set(initialLayers.split(',').filter(function (name) {
+          return name !== '';
+        }));
+
+        layerNames.forEach(function (layerName) {
+          setLayerEnabled(layerName, desiredLayers.has(layerName));
+        });
+      }
+
+      syncLayerUi();
+
+      if (hasInitialView) {
+        map.setView([initialLat, initialLng], initialZoom);
+        mapViewInitialized = true;
+        viewLocked = true;
+      }
+
+      if (initialTab) {
+        const initialTabButton = document.querySelector('[data-map-panel="' + initialTab + '"]');
+
+        if (initialTabButton && initialTabButton.dataset.mapPanel !== state.panel) {
+          initialTabButton.click();
+        }
+      }
+
+      urlReady = true;
+      syncUrl();
     });
   </script>
 @endpush

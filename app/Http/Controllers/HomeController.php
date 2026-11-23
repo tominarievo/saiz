@@ -14,7 +14,6 @@ use App\Signal;
 use App\SupportCategory1;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 
@@ -101,79 +100,22 @@ class HomeController extends Controller
 
         $support_category1_list = SupportCategory1::get();
 
-        $count_list = [];
+        $shelter_statuses = Shelter::query()->pluck('status', 'id')->all();
 
-        foreach ($support_category1_list as $support_category1)
-        {
-            $category1_element = new \stdClass();
-            $category1_element->support_category1 = $support_category1;
-            $category1_element->list      = [];
+        $reports_by_shelter = Report::with('supportCategory2s')
+            ->orderByDesc('report_date')
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('shelter_id');
 
-            // 最後の日報を取得する。
-            $last_report = $this->getLastReport($support_category1, $condition);
+        $signal_cache = $this->buildSignalCache($reports_by_shelter);
 
-            $category1_element->last_report        = $last_report;
-            $category1_element->last_report_signal = $last_report ? $last_report->getStrongestSignal($support_category1->id) : null;
-
-            $query = Shelter::query();
-
-            $query->whereHas("reports", function($report_sub_q) use ($condition, $support_category1) {
-
-                $report_sub_q->where('report_date', '>=', $condition->start_date);
-
-                $report_sub_q->where('report_date', '<=', $condition->end_date);
-
-                $report_sub_q->when(filled($condition->disaster_id), function($q) use ($condition) {
-                    $q->where('disaster_id', $condition->disaster_id);
-                });
-
-                $report_sub_q->whereHas('supportCategory2s', function($category_query) use ($support_category1) {
-                    $category_query->where('support_category1_id', $support_category1->id);
-                });
-            });
-
-            $shelters = $query->get();
-
-            $shelter_signal_unique_set = [];
-
-            foreach ($shelters as $shelter) {
-
-                // あらためて支援先の日報を検索
-                foreach ($shelter->getSearchedReports($condition, $support_category1) as $report) {
-
-                    // 日報の中間テーブルをループし、シグナルをカウントする。
-                    foreach ($report->supportCategory2s as $report_category2) {
-
-                        // 支援種別(大)に絞り込まれていない支援種別(中)のループなので、ループ中の支援種別(大)に絞り込む
-                        if ($report_category2->support_category1_id != $support_category1->id) {
-                            continue;
-                        }
-
-                        $shelter_unique_key = "{$shelter->id}.{$report->report_date}.{$report_category2->pivot->signal}";
-
-                        // 支援先＋日付＋シグナルのカウントは1度だけとする。Setを使ってチェック。
-                        if (Arr::has($shelter_signal_unique_set, $shelter_unique_key)) {
-                            continue;
-                        } else {
-                            Arr::set($shelter_signal_unique_set, $shelter_unique_key, /* ダミー */true);
-                        }
-
-                        // このキーは日付＋シグナル
-                        $key = "{$report->report_date}.{$report_category2->pivot->signal}";
-
-                        if ( ! Arr::has($category1_element->list, $key)) {
-
-                            Arr::set($category1_element->list, $key, 0);
-                        }
-
-                        $count = Arr::get($category1_element->list, $key);
-                        Arr::set($category1_element->list, $key, $count + 1);
-                    }
-                }
-            }
-
-            $count_list[] = $category1_element;
-        }
+        $count_list = $this->buildCountList(
+            $support_category1_list,
+            $reports_by_shelter,
+            $shelter_statuses,
+            $condition
+        );
 
         View::share("count_list", $count_list);
 
@@ -190,14 +132,16 @@ class HomeController extends Controller
 
         $shelters = $shelter_qury->get();
 
-        // 地図用検索条件（空)
-        $map_condition = new \stdClass();
-
         if (filled($shelters)) {
 
             foreach ($shelters as $shelter) {
 
-                $signal = $shelter->getMaxSignalForMap($map_condition);
+                $signal_data = $signal_cache[$shelter->id] ?? [
+                    'overall' => Signal::NO_SIGNAL,
+                    'by_category' => [],
+                ];
+
+                $signal = Signal::getSignal($signal_data['overall']);
 
                 // conditionは上のテーブルと共通
                 $shelter->signal_id  = $signal->id;
@@ -207,7 +151,9 @@ class HomeController extends Controller
 
                 foreach ($support_category1_list as $support_category1) {
 
-                    $tmp_signal = $shelter->getMaxSignalForMap($map_condition, $support_category1);
+                    $tmp_signal = Signal::getSignal(
+                        $signal_data['by_category'][$support_category1->id] ?? Signal::NO_SIGNAL
+                    );
 
                     $category1_list[] = [
                         "id"         => $support_category1->id,
@@ -239,18 +185,19 @@ class HomeController extends Controller
     /**
      * 支援種別の一番新しい日報を取得する。
      *
-     * @param  mixed  $support_category1  支援種別
-     * @param  mixed  $condition  条件
-     * @return \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Eloquent\Model|object|null
+     * @param mixed $support_category1
+     * @param mixed $condition
+     * @return \App\Report|null
      */
     private function getLastReport($support_category1, $condition)
     {
-        $report_query = Report::whereHas('shelter', function ($shelter_query) {
-            $shelter_query->where('status', true);
-        })->whereHas('supportCategory2s', function ($sub_query) use ($support_category1) {
-            $sub_query->where('support_category1_id', $support_category1->id)
-                ->where('signal', '!=', Signal::NO_SIGNAL);
-        });
+        $report_query = Report::with('validSupportCategory2s')
+            ->whereHas('shelter', function ($shelter_query) {
+                $shelter_query->where('status', true);
+            })->whereHas('supportCategory2s', function ($sub_query) use ($support_category1) {
+                $sub_query->where('support_category1_id', $support_category1->id)
+                    ->where('signal', '!=', Signal::NO_SIGNAL);
+            });
 
         // 災害情報の指定がある場合
         if (filled($condition->disaster_id)) {
@@ -259,6 +206,181 @@ class HomeController extends Controller
 
         return $report_query->orderBy('report_date', "DESC")
             ->first();
+    }
+
+    /**
+     * 避難所ごとの最大シグナルを計算する。
+     *
+     * @param \Illuminate\Support\Collection $reports_by_shelter
+     * @return array<int, array{overall: int, by_category: array<int, int>}>
+     */
+    private function buildSignalCache($reports_by_shelter): array
+    {
+        $cache = [];
+
+        foreach ($reports_by_shelter as $shelter_id => $reports) {
+
+            $latest_sub_categories = [];
+
+            foreach ($reports as $report) {
+                foreach ($report->supportCategory2s as $support_category2) {
+
+                    $signal = (int) $support_category2->pivot->signal;
+
+                    if ($signal === Signal::NO_SIGNAL) {
+                        continue;
+                    }
+
+                    if (isset($latest_sub_categories[$support_category2->id])) {
+                        continue;
+                    }
+
+                    $latest_sub_categories[$support_category2->id] = [
+                        'support_category1_id' => (int) $support_category2->support_category1_id,
+                        'signal' => $signal,
+                    ];
+                }
+            }
+
+            $by_category = [];
+
+            foreach ($latest_sub_categories as $entry) {
+                $by_category[$entry['support_category1_id']] = max(
+                    $by_category[$entry['support_category1_id']] ?? 0,
+                    $entry['signal']
+                );
+            }
+
+            if ($by_category === []) {
+                $overall = count($reports) === 0 ? Signal::NO_SIGNAL : Signal::SIGNAL_INFO;
+            } else {
+                $overall = max(Signal::SIGNAL_INFO, max($by_category));
+            }
+
+            $cache[$shelter_id] = [
+                'overall' => $overall,
+                'by_category' => $by_category,
+            ];
+        }
+
+        return $cache;
+    }
+
+    /**
+     * 支援種別ごとの日別シグナル件数と最終日報を計算する。
+     *
+     * @param \Illuminate\Support\Collection $support_category1_list
+     * @param \Illuminate\Support\Collection $reports_by_shelter
+     * @param array<int, mixed> $shelter_statuses
+     * @param mixed $condition
+     * @return array<int, \stdClass>
+     */
+    private function buildCountList($support_category1_list, $reports_by_shelter, array $shelter_statuses, $condition): array
+    {
+        $start_date = filled($condition->start_date)
+            ? Carbon::parse($condition->start_date)->toDateString()
+            : null;
+        $end_date = filled($condition->end_date)
+            ? Carbon::parse($condition->end_date)->toDateString()
+            : null;
+
+        $count_list = [];
+
+        foreach ($support_category1_list as $support_category1) {
+
+            $category1_element = new \stdClass();
+            $category1_element->support_category1 = $support_category1;
+            $category1_element->list = [];
+
+            $last_report = $this->getLastReport($support_category1, $condition);
+            $last_report_signal = $last_report ? $last_report->getStrongestSignal($support_category1->id) : null;
+
+            $shelter_signal_unique_set = [];
+
+            foreach ($reports_by_shelter as $shelter_id => $reports) {
+
+                if (!array_key_exists($shelter_id, $shelter_statuses)) {
+                    continue;
+                }
+
+                foreach ($reports as $report) {
+
+                    $report_date = $report->getRawOriginal('report_date');
+                    $report_date = $report_date === null ? null : substr((string) $report_date, 0, 10);
+
+                    if ($this->reportInDateRange($report_date, $start_date, $end_date)
+                        && $this->reportMatchesDisaster($report, $condition)) {
+
+                        foreach ($report->supportCategory2s as $support_category2) {
+
+                            if ((int) $support_category2->support_category1_id !== (int) $support_category1->id) {
+                                continue;
+                            }
+
+                            $signal = $support_category2->pivot->signal;
+                            $shelter_unique_key = "{$shelter_id}.{$report->report_date}.{$signal}";
+
+                            if (isset($shelter_signal_unique_set[$shelter_unique_key])) {
+                                continue;
+                            }
+
+                            $shelter_signal_unique_set[$shelter_unique_key] = true;
+
+                            $key = "{$report->report_date}.{$signal}";
+                            $category1_element->list[$key] = ($category1_element->list[$key] ?? 0) + 1;
+                        }
+                    }
+
+                }
+            }
+
+            $category1_element->last_report = $last_report;
+            $category1_element->last_report_signal = $last_report_signal;
+
+            $count_list[] = $category1_element;
+        }
+
+        return $count_list;
+    }
+
+    /**
+     * 日報が日付範囲内か判定する。
+     *
+     * @param mixed $report_date
+     * @param string|null $start_date
+     * @param string|null $end_date
+     * @return bool
+     */
+    private function reportInDateRange($report_date, ?string $start_date, ?string $end_date): bool
+    {
+        if ($report_date === null) {
+            return false;
+        }
+
+        $report_date = substr((string) $report_date, 0, 10);
+
+        if ($start_date !== null && $report_date < $start_date) {
+            return false;
+        }
+
+        if ($end_date !== null && $report_date > $end_date) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 日報が災害条件に一致するか判定する。
+     *
+     * @param \App\Report $report
+     * @param mixed $condition
+     * @return bool
+     */
+    private function reportMatchesDisaster(Report $report, $condition): bool
+    {
+        return !filled($condition->disaster_id)
+            || (int) $report->disaster_id === (int) $condition->disaster_id;
     }
 
     /**

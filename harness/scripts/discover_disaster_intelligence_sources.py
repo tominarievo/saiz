@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
+import ipaddress
 import json
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -30,6 +32,63 @@ CONTAINER_ROOT = '/var/www/html'
 PROMPT_PATH = REPO / 'resources/prompts/discover_sources.txt'
 LOCK_FILE = Path('/tmp/saiz-discover-intelligence-sources.lock')
 ALLOWED_TYPES = {'roads', 'waste_sites', 'meeting_insights'}
+ALLOWED_HOSTS = {
+    'jvoad.jp',
+    'kvoad.com',
+    'cvoad.jp',
+    'portal.bousai.pref.kumamoto.jp',
+    'd2800000147bueaq.my.salesforce-sites.com',
+    'pref-chiba-bousai.my.salesforce-sites.com',
+    'geoshape.ex.nii.ac.jp',
+}
+ALLOWED_HOST_SUFFIXES = ('.go.jp', '.lg.jp', '.or.jp', '.jvoad.jp', '.kvoad.com', '.cvoad.jp')
+ALLOWED_HOST_PATTERN = re.compile(
+    r'^(?:www\.)?(?:city|town|vill|pref)\.[a-z0-9-]+(?:\.[a-z0-9-]+)*\.jp$',
+    re.IGNORECASE,
+)
+
+
+def source_host_allowed(host):
+    host = (host or '').lower().rstrip('.')
+    host = re.sub(r'^www\.', '', host)
+
+    if not host:
+        return False
+
+    if host in ALLOWED_HOSTS:
+        return True
+
+    if host.endswith(ALLOWED_HOST_SUFFIXES):
+        return True
+
+    return bool(ALLOWED_HOST_PATTERN.match(host))
+
+
+def source_url_allowed(url):
+    parsed = urlparse(url)
+
+    if parsed.scheme not in ('http', 'https'):
+        return False
+
+    if parsed.username or parsed.password:
+        return False
+
+    host = parsed.hostname or ''
+
+    if not host:
+        return False
+
+    try:
+        ipaddress.ip_address(host)
+
+        return False
+    except ValueError:
+        pass
+
+    if parsed.port and parsed.port not in (80, 443):
+        return False
+
+    return source_host_allowed(host)
 
 
 def fetch_source_context(disaster_id):
@@ -117,6 +176,9 @@ def normalize_sources(items, verify_urls):
         url = str(item.get('url') or '').strip()
 
         if not url.startswith(('http://', 'https://')):
+            continue
+
+        if not source_url_allowed(url):
             continue
 
         key = (source_type, url)

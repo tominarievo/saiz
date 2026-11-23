@@ -103,8 +103,8 @@
 
                 <div class="col-sm-10">
 
-                  {{ $organization->localGovernment->prefecture->name }}
-                  {{ $organization->localGovernment->name }}
+                  {{ $organization->localGovernment?->prefecture?->name }}
+                  {{ $organization->localGovernment?->name }}
                   {{ $organization->npo_col_3 }}
 
                 </div>

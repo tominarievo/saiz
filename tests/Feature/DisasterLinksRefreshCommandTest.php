@@ -41,13 +41,13 @@ class DisasterLinksRefreshCommandTest extends TestCase
 
         $disaster->informationLinks()->create([
             'description' => '手動で登録した公式情報',
-            'url' => 'https://example.com/manual',
+            'url' => 'https://www.pref.toyama.jp/manual',
             'source' => 'manual',
         ]);
 
         $disaster->informationLinks()->create([
             'description' => '古いAI情報',
-            'url' => 'https://example.com/old-ai',
+            'url' => 'https://www.pref.toyama.jp/old-ai',
             'source' => 'ai',
             'fetched_at' => now()->subDay(),
         ]);
@@ -65,7 +65,7 @@ class DisasterLinksRefreshCommandTest extends TestCase
         $this->assertSame($disaster->id, $context[0]['id']);
         $this->assertSame('最新情報更新テスト災害', $context[0]['name']);
         $this->assertSame(['富山県 氷見市'], $context[0]['municipalities']);
-        $this->assertSame('https://example.com/manual', $context[0]['manual_links'][0]['url']);
+        $this->assertSame('https://www.pref.toyama.jp/manual', $context[0]['manual_links'][0]['url']);
     }
 
     public function test_ingest_command_replaces_ai_links_and_keeps_manual_links(): void
@@ -76,15 +76,19 @@ class DisasterLinksRefreshCommandTest extends TestCase
             'links' => [
                 [
                     'description' => '新しい公式情報',
-                    'url' => 'https://example.com/new-ai',
+                    'url' => 'https://www.pref.toyama.jp/new-ai',
                 ],
                 [
                     'description' => '手動リンクと重複',
-                    'url' => 'https://example.com/manual',
+                    'url' => 'https://www.pref.toyama.jp/manual',
                 ],
                 [
                     'description' => '不正なURL',
                     'url' => 'javascript:alert(1)',
+                ],
+                [
+                    'description' => '許可外のURL',
+                    'url' => 'https://example.com/rejected',
                 ],
             ],
         ], JSON_UNESCAPED_UNICODE);
@@ -95,20 +99,51 @@ class DisasterLinksRefreshCommandTest extends TestCase
         ]));
 
         $this->assertDatabaseMissing('disaster_information_links', [
-            'url' => 'https://example.com/old-ai',
+            'url' => 'https://www.pref.toyama.jp/old-ai',
+        ]);
+        $this->assertDatabaseMissing('disaster_information_links', [
+            'url' => 'https://example.com/rejected',
         ]);
         $this->assertDatabaseHas('disaster_information_links', [
-            'url' => 'https://example.com/new-ai',
+            'url' => 'https://www.pref.toyama.jp/new-ai',
             'source' => 'ai',
         ]);
         $this->assertDatabaseHas('disaster_information_links', [
-            'url' => 'https://example.com/manual',
+            'url' => 'https://www.pref.toyama.jp/manual',
             'source' => 'manual',
         ]);
         $this->assertSame(
             1,
             $disaster->informationLinks()->where('source', 'ai')->count()
         );
+    }
+
+    public function test_ingest_prefers_source_page_url_for_pdf(): void
+    {
+        $disaster = $this->createDisaster();
+
+        $payload = json_encode([
+            'links' => [
+                [
+                    'description' => 'PDFの掲載元ページ',
+                    'url' => 'https://www.pref.toyama.jp/document.pdf',
+                    'source_page_url' => 'https://www.pref.toyama.jp/source-page.html',
+                ],
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+
+        $this->assertSame(0, Artisan::call('disaster-links:ingest', [
+            'disaster' => $disaster->id,
+            '--json' => $payload,
+        ]));
+
+        $this->assertDatabaseHas('disaster_information_links', [
+            'url' => 'https://www.pref.toyama.jp/source-page.html',
+            'source' => 'ai',
+        ]);
+        $this->assertDatabaseMissing('disaster_information_links', [
+            'url' => 'https://www.pref.toyama.jp/document.pdf',
+        ]);
     }
 
     public function test_ingest_command_limits_ai_links_to_ten(): void
@@ -120,7 +155,7 @@ class DisasterLinksRefreshCommandTest extends TestCase
         for ($index = 1; $index <= 12; $index++) {
             $links[] = [
                 'description' => 'AI情報' . $index,
-                'url' => 'https://example.com/ai-' . $index,
+                'url' => 'https://www.pref.toyama.jp/ai-' . $index,
             ];
         }
 

@@ -240,9 +240,11 @@
 
                 </div>
                 <div class="col-sm-3">
-                  <div class="float-right">
-                    <a href="{{ route('shelters.create') }}" class="btn btn-primary pull-right"><i class="fas fa-plus"></i>  新規作成</a>
-                  </div>
+                  @if (auth()->user()->isAdmin())
+                    <div class="float-right">
+                      <a href="{{ route('shelters.create') }}" class="btn btn-primary pull-right"><i class="fas fa-plus"></i>  新規作成</a>
+                    </div>
+                  @endif
                 </div>
               </div>
 
@@ -287,11 +289,11 @@
                   </td>
 
                   <td>
-                    {{ $shelter->localGovernment->prefecture->name }}
+                    {{ $shelter->localGovernment?->prefecture?->name }}
                   </td>
 
                   <td>
-                    {{ $shelter->localGovernment->name }}
+                    {{ $shelter->localGovernment?->name }}
                   </td>
 
                   <td>

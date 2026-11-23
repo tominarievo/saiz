@@ -4,6 +4,9 @@ namespace App\Console\Commands;
 
 use App\Disaster;
 use App\DisasterIntelligenceSource;
+use App\Services\CollectedInformationBlocklist;
+use App\Services\DisasterDataSource\DisasterDataSourceRecorder;
+use App\Services\DisasterIntelligence\SourceUrlGuard;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Throwable;
@@ -30,7 +33,7 @@ class DisasterIntelligenceSourceIngest extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(SourceUrlGuard $guard, CollectedInformationBlocklist $blocklist): int
     {
         $disaster = Disaster::find($this->argument('disaster'));
 
@@ -72,6 +75,7 @@ class DisasterIntelligenceSourceIngest extends Command
 
         $saved = 0;
         $skipped = 0;
+        $recorder = app(DisasterDataSourceRecorder::class);
 
         foreach ($sources as $source) {
             if (!is_array($source)) {
@@ -91,6 +95,37 @@ class DisasterIntelligenceSourceIngest extends Command
             if (!filter_var($url, FILTER_VALIDATE_URL) || !in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)) {
                 $skipped++;
                 continue;
+            }
+
+            if ($blocklist->isUrlBlocked($disaster->id, $url)) {
+                $skipped++;
+                continue;
+            }
+
+            try {
+                $guard->assertAllowed($url, false);
+            } catch (Throwable $error) {
+                $skipped++;
+                $this->warn('取得先として許可されていないURLをスキップしました: ' . $url);
+                continue;
+            }
+
+            $sourcePageUrl = trim((string) ($source['source_page_url'] ?? ''));
+
+            if ($sourcePageUrl !== '') {
+                if (
+                    !filter_var($sourcePageUrl, FILTER_VALIDATE_URL)
+                    || !in_array(parse_url($sourcePageUrl, PHP_URL_SCHEME), ['http', 'https'], true)
+                    || $blocklist->isUrlBlocked($disaster->id, $sourcePageUrl)
+                ) {
+                    $sourcePageUrl = '';
+                } else {
+                    try {
+                        $guard->assertAllowed($sourcePageUrl, false);
+                    } catch (Throwable $error) {
+                        $sourcePageUrl = '';
+                    }
+                }
             }
 
             $sourceOrg = trim((string) ($source['source_org'] ?? ''));
@@ -122,10 +157,22 @@ class DisasterIntelligenceSourceIngest extends Command
                     'metadata' => [
                         'title' => $source['title'] ?? null,
                         'domain' => parse_url($url, PHP_URL_HOST),
+                        'source_page_url' => $sourcePageUrl !== '' ? $sourcePageUrl : null,
                         'ai_rank' => $aiRank,
                         'domain_rank' => $domainRank,
                     ],
                 ]
+            );
+
+            $recorder->record(
+                $disaster->id,
+                $type,
+                $sourceOrg,
+                $url,
+                $source['title'] ?? null,
+                now(),
+                $publishedAt,
+                ['credibility_rank' => $rank, 'discovered' => true]
             );
 
             $saved++;

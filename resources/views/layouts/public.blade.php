@@ -64,6 +64,9 @@
           <a href="{{ route('terms') }}" class="nav-link">利用規約</a>
         </li>
         <li class="nav-item">
+          <a href="{{ route('privacy') }}" class="nav-link">プライバシー</a>
+        </li>
+        <li class="nav-item">
           <a href="{{ route('login') }}" class="nav-link">ログイン</a>
         </li>
         @if (config('signup.enabled'))
@@ -82,6 +85,8 @@
       <span>災害支援情報共有システム「災図」</span>
       <span>
         <a href="{{ route('terms') }}">利用規約</a>
+        <span class="mx-2">|</span>
+        <a href="{{ route('privacy') }}">プライバシー</a>
         <span class="mx-2">|</span>
         <a href="{{ route('login') }}">ログイン</a>
       </span>

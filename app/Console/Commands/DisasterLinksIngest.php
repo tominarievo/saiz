@@ -3,6 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Disaster;
+use App\Services\CollectedInformationBlocklist;
+use App\Services\DisasterDataSource\DisasterDataSourceRecorder;
+use App\Services\DisasterIntelligence\SourceUrlGuard;
+use App\Support\DisasterDataSourceCategory;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -31,7 +35,7 @@ class DisasterLinksIngest extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(SourceUrlGuard $guard, CollectedInformationBlocklist $blocklist)
     {
         $disaster = Disaster::find($this->argument('disaster'));
 
@@ -105,6 +109,29 @@ class DisasterLinksIngest extends Command
                 continue;
             }
 
+            if ($blocklist->isUrlBlocked($disaster->id, $url)) {
+                continue;
+            }
+
+            try {
+                $guard->assertAllowed($url, false);
+            } catch (\Throwable $error) {
+                continue;
+            }
+
+            $sourcePageUrl = $this->validSourcePageUrl(
+                trim((string) ($item['source_page_url'] ?? '')),
+                $guard
+            );
+
+            if ($sourcePageUrl !== '' && $blocklist->isUrlBlocked($disaster->id, $sourcePageUrl)) {
+                $sourcePageUrl = '';
+            }
+
+            if ($sourcePageUrl !== '' && preg_match('/\.pdf($|\?)/i', $url)) {
+                $url = $sourcePageUrl;
+            }
+
             if (in_array($url, $manualUrls, true)) {
                 continue;
             }
@@ -127,18 +154,51 @@ class DisasterLinksIngest extends Command
         DB::transaction(function () use ($disaster, $links) {
             $disaster->informationLinks()->where('source', 'ai')->delete();
 
+            $recorder = app(DisasterDataSourceRecorder::class);
+            $collectedAt = now();
+
             foreach ($links as $link) {
                 $disaster->informationLinks()->create([
                     'description' => $link['description'],
                     'url' => $link['url'],
                     'source' => 'ai',
-                    'fetched_at' => now(),
+                    'fetched_at' => $collectedAt,
                 ]);
+
+                $host = parse_url($link['url'], PHP_URL_HOST);
+
+                $recorder->record(
+                    $disaster->id,
+                    DisasterDataSourceCategory::INFORMATION,
+                    $host ?: 'AI収集',
+                    $link['url'],
+                    $link['description'],
+                    $collectedAt
+                );
             }
         });
 
         $this->info(count($links) . '件の最新情報リンクを更新しました。');
 
         return self::SUCCESS;
+    }
+
+    private function validSourcePageUrl(string $url, SourceUrlGuard $guard): string
+    {
+        if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
+            return '';
+        }
+
+        if (!in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)) {
+            return '';
+        }
+
+        try {
+            $guard->assertAllowed($url, false);
+        } catch (\Throwable $error) {
+            return '';
+        }
+
+        return $url;
     }
 }

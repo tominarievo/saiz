@@ -126,4 +126,14 @@ class Disaster extends Model
     {
         return $this->hasMany(DisasterIntelligenceSource::class);
     }
+
+    /**
+     * 自動収集データの出典
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function dataSources()
+    {
+        return $this->hasMany(DisasterDataSource::class);
+    }
 }

@@ -8,11 +8,11 @@ import re
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
+
+from source_policy import is_allowed_url, safe_get_text, safe_head
 
 REPO = Path('/home/saiz/work/saiz')
 OPENCODE = Path('/home/saiz/.opencode/bin/opencode')
@@ -104,12 +104,14 @@ def build_prompt(disaster, limit):
 
 要件:
 - 最新情報を最大{limit}件。
-- 公式サイト（市町村、都道府県、国、気象庁、社会福祉協議会、公共機関、報道機関）を優先する。
+- 公式サイト（市町村、都道府県、国、気象庁、社会福祉協議会、公共機関、災害ボランティアセンター、JVOAD/KVOAD/CVOAD）のみを対象にする。
+- 報道機関、SNS、個人ブログ、まとめサイトは情報源にしない。
 - 被災者向け（支援制度、罹災証明、住宅、義援金、生活支援、道路・ライフライン）と支援者向け（ボランティア、寄附、支援制度）の情報を含める。
 - URLは実在するhttpまたはhttpsのものだけ。推測でURLを作らない。
+- URLがPDFの場合、そのPDFを掲載しているHTMLページが分かる場合は source_page_url に入れる。不明なら null にする。推測でURLを作らない。
 - 次の既存リンクと重複するURLは出力しない。
 {manual_urls}
-- 各要素は {{"description":"概要文。日付・期限・対象者があれば含め、200文字以内","url":"https://..."}} の形式。
+- 各要素は {{"description":"概要文。日付・期限・対象者があれば含め、200文字以内","url":"https://...","source_page_url":"https://..."}} の形式。
 - 出力はJSON配列のみ。コードブロック、説明文、見出しは付けない。'''
 
 
@@ -126,15 +128,20 @@ def build_volunteer_prompt(center):
 住所: {center.get('address', '')}
 電話: {center.get('phone', '')}
 公式URL: {center.get('url', '')}
+現在の登録状況: {center.get('activity_status', 'unknown')}
+前回確認メモ: {center.get('status_note', '') or 'なし'}
 {current}
 
 要件:
 - 公式サイト（災害ボランティアセンター、社会福祉協議会、自治体、全国社会福祉協議会など）を優先する。
 - 現在の募集状況、募集内容、対象者、集合場所、受付時間、持ち物、事前登録の有無、活動日などを簡潔にまとめる。
+- センターが閉所・活動終了・募集終了している場合は status を "closed"、開設中なら "open"、判断できないなら "unknown" にする。
+- 閉所・活動終了の明確な記載がない場合は "closed" と判断しない。
+- status_note には判断の根拠や補足を簡潔に書く。
 - 最新の情報を反映し、日付・期限があれば概要に含める。
 - URLは実在するhttpまたはhttpsのものだけ。推測でURLを作らない。
 - 直近の募集情報が確認できない場合は、titleを「募集情報未確認」、summaryに確認できなかった旨を記載する。
-- 出力は {{"title":"募集状況を表す簡潔な見出し","summary":"200文字以内の概要","url":"https://..."}} のJSONオブジェクトのみ。コードブロック、説明文、見出しは付けない。'''
+- 出力は {{"title":"募集状況を表す簡潔な見出し","summary":"200文字以内の概要","url":"https://...","status":"open|closed|unknown","status_note":"判断根拠・補足"}} のJSONオブジェクトのみ。コードブロック、説明文、見出しは付けない。'''
 
 
 def build_shelter_prompt(municipality):
@@ -219,41 +226,13 @@ def extract_json_object(answer):
 
 
 def url_is_available(url):
-    request = urllib.request.Request(
-        url,
-        headers={'User-Agent': 'Mozilla/5.0 (compatible; SaizDisasterLinks/1.0)'},
-    )
+    available, _ = safe_head(url)
 
-    try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            response.read(1024)
-            return response.status < 400
-    except urllib.error.HTTPError as error:
-        return error.code not in (404, 410)
-    except Exception:
-        return True
+    return available
 
 
 def fetch_source_text(url):
-    request = urllib.request.Request(
-        url,
-        headers={'User-Agent': 'Mozilla/5.0 (compatible; SaizShelterStatus/1.0)'},
-    )
-
-    with urllib.request.urlopen(request, timeout=30) as response:
-        raw = response.read()
-        charset = response.headers.get_content_charset()
-
-    for encoding in [charset, 'utf-8', 'cp932']:
-        if not encoding:
-            continue
-
-        try:
-            return raw.decode(encoding)
-        except (LookupError, UnicodeDecodeError):
-            continue
-
-    return raw.decode('utf-8', errors='replace')
+    return safe_get_text(url)
 
 
 def detect_all_closed(text):
@@ -268,7 +247,11 @@ def detect_all_closed(text):
     return any(marker in text for marker in markers)
 
 
-def normalize_links(items, manual_links, limit, verify_urls):
+def is_pdf_url(url):
+    return urlparse(url).path.lower().endswith('.pdf')
+
+
+def normalize_links(items, manual_links, limit, verify_urls, log_path=None):
     manual_urls = {item.get('url') for item in manual_links}
     valid = []
     seen = set()
@@ -279,6 +262,7 @@ def normalize_links(items, manual_links, limit, verify_urls):
 
         description = str(item.get('description', '')).strip()
         url = str(item.get('url', '')).strip()
+        source_page_url = str(item.get('source_page_url', '')).strip()
 
         if not description or not url:
             continue
@@ -286,14 +270,30 @@ def normalize_links(items, manual_links, limit, verify_urls):
         if not url.startswith(('http://', 'https://')):
             continue
 
+        if not is_allowed_url(url):
+            if log_path is not None:
+                log(f"取得対象外のURLをスキップしました: {url}", log_path)
+            continue
+
+        if source_page_url and not is_allowed_url(source_page_url):
+            source_page_url = ''
+
+        if source_page_url and is_pdf_url(url):
+            url = source_page_url
+
         if url in manual_urls or url in seen:
             continue
 
         if len(description) > 1000:
             description = description[:1000]
 
-        if verify_urls and not url_is_available(url):
-            continue
+        if verify_urls:
+            available, reason = safe_head(url)
+
+            if not available:
+                if log_path is not None:
+                    log(f"URLを確認できませんでした: {url} ({reason})", log_path)
+                continue
 
         seen.add(url)
         valid.append({'description': description, 'url': url})
@@ -709,7 +709,7 @@ def main():
     parser.add_argument('--limit', type=int, default=10)
     parser.add_argument('--model', default=os.environ.get('OPENCODE_MODEL', DEFAULT_MODEL))
     parser.add_argument('--log', default=str(DEFAULT_LOG))
-    parser.add_argument('--no-url-check', action='store_true')
+    parser.add_argument('--no-url-check', action='store_true', help='疎通確認のみ省略する。取得先allowlistとrobots.txtは常に適用する。')
     parser.add_argument('--skip-links', action='store_true')
     parser.add_argument('--skip-volunteers', action='store_true')
     parser.add_argument('--skip-shelters', action='store_true')
@@ -751,6 +751,7 @@ def main():
                     disaster.get('manual_links') or [],
                     args.limit,
                     not args.no_url_check,
+                    log_path,
                 )
 
                 if not links:
@@ -790,8 +791,13 @@ def main():
                 title = str(recruitment.get('title', '')).strip()
                 summary = str(recruitment.get('summary', '')).strip()
                 url = str(recruitment.get('url', '')).strip()
+                status = str(recruitment.get('status', 'unknown')).strip().lower()
+                status_note = str(recruitment.get('status_note', '')).strip()
 
-                if not title and not summary:
+                if status not in ('open', 'closed', 'unknown'):
+                    status = 'unknown'
+
+                if not title and not summary and status == 'unknown':
                     log(f"センターID {center.get('id')}: 募集情報が空でした。", log_path)
                     continue
 
@@ -801,9 +807,16 @@ def main():
                 if url and not url.startswith(('http://', 'https://')):
                     url = ''
 
-                if url and not args.no_url_check and not url_is_available(url):
-                    log(f"センターID {center.get('id')}: URLを確認できませんでした。{url}", log_path)
+                if url and not is_allowed_url(url):
+                    log(f"センターID {center.get('id')}: 取得対象外のURLのため空にしました。{url}", log_path)
                     url = ''
+
+                if url and not args.no_url_check:
+                    available, reason = safe_head(url)
+
+                    if not available:
+                        log(f"センターID {center.get('id')}: URLを確認できませんでした。{url} ({reason})", log_path)
+                        url = ''
 
                 if args.dry_run:
                     log(f"センターID {center.get('id')}: DryRunのため募集情報を検出（更新なし）。", log_path)
@@ -814,6 +827,8 @@ def main():
                         'title': title,
                         'summary': summary,
                         'url': url,
+                        'status': status,
+                        'status_note': status_note,
                     })
                     log(f"センターID {center.get('id')}: 募集情報を更新しました。", log_path)
                 except Exception as error:

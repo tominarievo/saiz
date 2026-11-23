@@ -204,10 +204,10 @@
                   </td>
 
                   <td>
-                    {{ $organization->localGovernment->prefecture->name }}
+                    {{ $organization->localGovernment?->prefecture?->name }}
                   </td>
 
-                  <td>{{ $organization->localGovernment->name }}</td>
+                  <td>{{ $organization->localGovernment?->name }}</td>
 
                   <td>
 

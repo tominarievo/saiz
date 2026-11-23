@@ -5,7 +5,10 @@ namespace App\Jobs;
 use App\Disaster;
 use App\MeetingInsight;
 use App\RoadRegulation;
+use App\Services\CollectedInformationBlocklist;
+use App\Services\DisasterDataSource\DisasterDataSourceRecorder;
 use App\Services\DisasterIntelligence\DisasterSourceParser;
+use App\Services\DisasterIntelligence\MeetingRelevanceFilter;
 use App\Services\DisasterIntelligence\PdfTextExtractor;
 use App\WasteSite;
 use Illuminate\Bus\Queueable;
@@ -35,6 +38,11 @@ class ParseDisasterSourceJob implements ShouldQueue
     /**
      * @var int
      */
+    public $timeout = 300;
+
+    /**
+     * @var int
+     */
     public $backoff = 30;
 
     /**
@@ -55,7 +63,8 @@ class ParseDisasterSourceJob implements ShouldQueue
         public readonly ?string $sourcePublishedAt = null,
         public readonly ?int $sourcePage = null,
         public readonly ?string $sourceCredibility = null,
-        public readonly ?string $sourceCredibilityReason = null
+        public readonly ?string $sourceCredibilityReason = null,
+        public readonly ?string $sourcePageUrl = null
     ) {
     }
 
@@ -65,7 +74,8 @@ class ParseDisasterSourceJob implements ShouldQueue
     public function handle(
         PdfTextExtractor $extractor,
         DisasterSourceParser $parser,
-        \App\Services\DisasterIntelligence\RoadRecoveryVerifier $recoveryVerifier
+        CollectedInformationBlocklist $blocklist,
+        MeetingRelevanceFilter $meetingRelevance
     ): void {
         ini_set('memory_limit', '512M');
 
@@ -120,18 +130,38 @@ class ParseDisasterSourceJob implements ShouldQueue
             ->all();
 
         $records = array_values($parser->parse($this->type, $text, $attribution, $targetMunicipalities));
-        $recoveredIndexes = [];
+        $citationUrl = $this->sourcePageUrl ?: null;
 
-        if ($this->type === 'roads' && $records !== []) {
-            $recoveredIndexes = $recoveryVerifier->recoveredIndexes($this->disasterId, $records);
+        if ($citationUrl !== null) {
+            $records = array_map(function (array $record) use ($citationUrl) {
+                $record['metadata'] = array_merge(
+                    is_array($record['metadata'] ?? null) ? $record['metadata'] : [],
+                    [
+                        'citation_url' => $citationUrl,
+                        'retrieval_url' => $this->sourceUrl,
+                    ]
+                );
 
-            if ($recoveredIndexes !== []) {
-                $records = array_values(array_filter(
-                    $records,
-                    fn ($index) => !in_array($index, $recoveredIndexes, true),
-                    ARRAY_FILTER_USE_KEY
-                ));
-            }
+                return $record;
+            }, $records);
+        }
+
+        $roadStates = [];
+
+        if ($this->type === 'roads') {
+            $roadStates = RoadRegulation::where('disaster_id', $this->disasterId)
+                ->where('source_url', $this->sourceUrl)
+                ->get()
+                ->mapWithKeys(function (RoadRegulation $road) {
+                    return [$this->roadStateKey($road->road_name, $road->section) => [
+                        'status' => $road->status,
+                        'recovered_at' => $road->recovered_at,
+                        'last_verified_at' => $road->last_verified_at,
+                        'recovery_source_url' => $road->recovery_source_url,
+                        'recovery_evidence' => $road->recovery_evidence,
+                    ]];
+                })
+                ->all();
 
             RoadRegulation::where('disaster_id', $this->disasterId)
                 ->where('source_url', $this->sourceUrl)
@@ -140,27 +170,77 @@ class ParseDisasterSourceJob implements ShouldQueue
 
         foreach ($records as $record) {
             match ($this->type) {
-                'roads' => $this->saveRoad($record),
-                'waste_sites' => $this->saveWasteSite($record),
-                'meeting_insights' => $this->saveMeetingInsight($record),
+                'roads' => $this->saveRoad($record, $blocklist),
+                'waste_sites' => $this->saveWasteSite($record, $blocklist),
+                'meeting_insights' => $this->saveMeetingInsight($record, $blocklist, $meetingRelevance),
                 default => null,
             };
         }
+
+        if ($roadStates !== []) {
+            RoadRegulation::where('disaster_id', $this->disasterId)
+                ->where('source_url', $this->sourceUrl)
+                ->get()
+                ->each(function (RoadRegulation $road) use ($roadStates) {
+                    $state = $roadStates[$this->roadStateKey($road->road_name, $road->section)] ?? null;
+
+                    if ($state !== null) {
+                        $road->forceFill($state)->save();
+                    }
+                });
+        }
+
+        app(DisasterDataSourceRecorder::class)->record(
+            $this->disasterId,
+            $this->type,
+            $this->sourceOrg,
+            $citationUrl ?: $this->sourceUrl,
+            null,
+            now(),
+            $this->sourcePublishedAt,
+            [
+                'records' => count($records),
+                'raw_file_path' => $this->filePath,
+                'retrieval_url' => $this->sourceUrl,
+                'citation_url' => $citationUrl,
+                'credibility' => $this->sourceCredibility,
+            ]
+        );
 
         Log::info('災害資料をパースしました。', [
             'disaster_id' => $this->disasterId,
             'type' => $this->type,
             'records' => count($records),
-            'recovered' => count($recoveredIndexes),
             'file' => $this->filePath,
         ]);
+    }
+
+    private function roadStateKey(?string $roadName, ?string $section): string
+    {
+        $normalize = function (?string $value): string {
+            $value = mb_convert_kana((string) $value, 'asKV');
+
+            return (string) preg_replace('/[\s　]+/u', '', $value);
+        };
+
+        return $normalize($roadName) . '|' . $normalize($section);
     }
 
     /**
      * @param array<string, mixed> $record
      */
-    private function saveRoad(array $record): void
+    private function saveRoad(array $record, CollectedInformationBlocklist $blocklist): void
     {
+        $blockKey = CollectedInformationBlocklist::roadKey(
+            $this->sourceUrl,
+            (string) ($record['road_name'] ?? ''),
+            $record['section'] ?? null
+        );
+
+        if ($blocklist->isBlocked($this->disasterId, CollectedInformationBlocklist::TYPE_ROAD, $blockKey)) {
+            return;
+        }
+
         RoadRegulation::updateOrCreate(
             [
                 'disaster_id' => $this->disasterId,
@@ -175,23 +255,60 @@ class ParseDisasterSourceJob implements ShouldQueue
     /**
      * @param array<string, mixed> $record
      */
-    private function saveWasteSite(array $record): void
+    private function saveWasteSite(array $record, CollectedInformationBlocklist $blocklist): void
     {
-        WasteSite::updateOrCreate(
-            [
-                'disaster_id' => $this->disasterId,
-                'source_url' => $this->sourceUrl,
-                'name' => $record['name'],
-            ],
-            $record + ['disaster_id' => $this->disasterId]
+        $blockKey = CollectedInformationBlocklist::wasteSiteKey(
+            $this->sourceUrl,
+            (string) ($record['name'] ?? '')
         );
+
+        if ($blocklist->isBlocked($this->disasterId, CollectedInformationBlocklist::TYPE_WASTE_SITE, $blockKey)) {
+            return;
+        }
+
+        $site = WasteSite::firstOrNew([
+            'disaster_id' => $this->disasterId,
+            'source_url' => $this->sourceUrl,
+            'name' => $record['name'],
+        ]);
+
+        if ($site->exists && $site->last_verified_at !== null) {
+            unset($record['status']);
+        }
+
+        $site->fill($record + ['disaster_id' => $this->disasterId])->save();
     }
 
     /**
      * @param array<string, mixed> $record
      */
-    private function saveMeetingInsight(array $record): void
-    {
+    private function saveMeetingInsight(
+        array $record,
+        CollectedInformationBlocklist $blocklist,
+        MeetingRelevanceFilter $meetingRelevance
+    ): void {
+        $meetingText = implode("\n", [
+            (string) ($record['meeting_name'] ?? ''),
+            $this->sourceOrg,
+            implode(' ', (array) ($record['decisions'] ?? [])),
+            implode(' ', (array) ($record['policy_changes'] ?? [])),
+            implode(' ', (array) ($record['unmet_needs'] ?? [])),
+        ]);
+
+        if (!$meetingRelevance->isRelevant($this->disasterId, $meetingText)) {
+            return;
+        }
+
+        $blockKey = CollectedInformationBlocklist::meetingInsightKey(
+            $this->sourceUrl,
+            (string) ($record['meeting_name'] ?? ''),
+            $record['held_at'] ?? null
+        );
+
+        if ($blocklist->isBlocked($this->disasterId, CollectedInformationBlocklist::TYPE_MEETING_INSIGHT, $blockKey)) {
+            return;
+        }
+
         MeetingInsight::updateOrCreate(
             [
                 'disaster_id' => $this->disasterId,

@@ -137,7 +137,9 @@
 
 
                   <br>
-                  支援先を新しく追加する場合は<a href="{{ route('shelters.create', ['from' => 'reports']) }}">こちら</a>
+                  @if (auth()->user()->isAdmin())
+                    支援先を新しく追加する場合は<a href="{{ route('shelters.create', ['from' => 'reports']) }}">こちら</a>
+                  @endif
 
 
             </div>

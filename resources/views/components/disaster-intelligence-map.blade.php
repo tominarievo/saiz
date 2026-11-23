@@ -309,7 +309,11 @@
         return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('ja-JP');
     };
 
-    const roadTypeMeta = function (type) {
+    const roadTypeMeta = function (type, status) {
+        if (status === 'open') {
+            return { label: '解除済み', color: '#198754', guidance: '通行止めは解除されています。最新情報を確認してください。' };
+        }
+
         return {
             full_closure: { label: '全面通行止', color: '#dc3545', guidance: 'この区間は通行できません。迂回路を確認してください。' },
             alternating: { label: '片側交互通行', color: '#fd7e14', guidance: '片側交互で通行できます。現地の誘導に従ってください。' },
@@ -336,20 +340,45 @@
     };
 
     const roadBadge = function (properties) {
-        const meta = roadTypeMeta(properties.regulation_type);
+        const meta = roadTypeMeta(properties.regulation_type, properties.status);
 
         return '<span class="disaster-intel__badge" style="background:' + meta.color + '">' + escapeHtml(meta.label) + '</span>';
     };
 
+    const staleBadge = function (properties, source) {
+        const value = source && source.published_at
+            ? source.published_at
+            : (properties.updated_at || properties.last_verified_at);
+
+        if (!value) {
+            return '';
+        }
+
+        const timestamp = new Date(value).getTime();
+
+        if (Number.isNaN(timestamp)) {
+            return '';
+        }
+
+        const threshold = new Date();
+        threshold.setMonth(threshold.getMonth() - 1);
+
+        return timestamp < threshold.getTime()
+            ? '<span class="badge badge-warning ml-1">1か月以上経過</span>'
+            : '';
+    };
+
     const roadPopupBody = function (properties) {
-        const meta = roadTypeMeta(properties.regulation_type);
+        const meta = roadTypeMeta(properties.regulation_type, properties.status);
+        const stale = staleBadge(properties, properties.source);
 
         return roadBadge(properties)
             + '<div class="guidance" style="border-left:4px solid ' + meta.color + '">' + escapeHtml(meta.guidance) + '</div>'
             + '<div><strong>区間:</strong> ' + escapeHtml(properties.section || '不明') + '</div>'
             + '<div><strong>対象車両:</strong> ' + escapeHtml(formatVehicles(properties.vehicle_classes)) + '</div>'
             + '<div><strong>事由:</strong> ' + escapeHtml(properties.reason || '不明') + '</div>'
-            + '<div class="meta">信頼度: ' + escapeHtml(properties.confidence_rank || 'C') + '</div>';
+            + '<div class="meta">信頼度: ' + escapeHtml(properties.confidence_rank || 'C') + '</div>'
+            + (stale ? '<div>' + stale + '</div>' : '');
     };
 
     const map = new maplibregl.Map({
@@ -587,7 +616,7 @@
 
         features.forEach(function (feature) {
             const properties = feature.properties || {};
-            const meta = roadTypeMeta(properties.regulation_type);
+            const meta = roadTypeMeta(properties.regulation_type, properties.status);
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'disaster-intel__road-item';
@@ -605,7 +634,9 @@
 
     const updateStatus = function () {
         const closureCount = allRoadFeatures.filter(function (feature) {
-            return (feature.properties || {}).regulation_type === 'full_closure';
+            const properties = feature.properties || {};
+
+            return properties.regulation_type === 'full_closure' && properties.status !== 'unknown';
         }).length;
         const alternatingCount = allRoadFeatures.filter(function (feature) {
             return (feature.properties || {}).regulation_type === 'alternating';

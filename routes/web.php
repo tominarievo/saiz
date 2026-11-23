@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\CollectedInformationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\SignupController;
 use App\Http\Controllers\DisasterController;
@@ -38,6 +39,7 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 // 利用規約
 Route::view('terms', 'legal.terms')->name('terms');
+Route::view('privacy', 'legal.privacy')->name('privacy');
 
 // オンラインサインアップ（支援団体＋代表ユーザーの新規登録）
 Route::get('signup', [SignupController::class, 'create'])->middleware(['guest', 'signup.enabled'])->name('signup.create');
@@ -53,6 +55,10 @@ Route::get('disasters/{disaster}/intelligence', [DisasterController::class, 'int
     ->where('disaster', '[0-9]+')
     ->middleware('my-common')
     ->name('disasters.intelligence');
+Route::get('disasters/{disaster}/sources', [DisasterController::class, 'sources'])
+    ->where('disaster', '[0-9]+')
+    ->middleware('my-common')
+    ->name('disasters.sources');
 Route::get('disasters/{disaster}/school-districts/{type}', [DisasterController::class, 'schoolDistricts'])
     ->where('disaster', '[0-9]+')
     ->whereIn('type', ['elementary', 'junior_high'])
@@ -99,6 +105,14 @@ Route::middleware(['auth', 'my-common'])->group(function () {
     Route::resource('organizations', OrganizationController::class);
     Route::resource('shelters', ShelterController::class);
     Route::resource('disasters', DisasterController::class)->except(['show']);
+
+    Route::get('/admin/collected-information', [CollectedInformationController::class, 'index'])
+        ->name('admin.collected_information.index');
+    Route::delete('/admin/collected-information/bulk', [CollectedInformationController::class, 'destroyBulk'])
+        ->name('admin.collected_information.bulk_destroy');
+    Route::delete('/admin/collected-information/{type}/{id}', [CollectedInformationController::class, 'destroy'])
+        ->whereIn('type', ['source', 'link', 'road', 'waste_site', 'meeting_insight'])
+        ->name('admin.collected_information.destroy');
     Route::resource('support_category1s', SupportCategory1Controller::class);
     Route::resource('support_category2s', SupportCategory2Controller::class);
     Route::resource('reports', ReportController::class);

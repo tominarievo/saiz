@@ -18,7 +18,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->describe('Display an inspiring quote');
 
-Schedule::command('disaster-intelligence:sync 1')->dailyAt('06:30')->withoutOverlapping();
-Schedule::command('disaster-intelligence:sync 5')->dailyAt('06:40')->withoutOverlapping();
-Schedule::command('disaster-intelligence:sync 6')->dailyAt('06:50')->withoutOverlapping();
 Schedule::command('disaster-intelligence:import-kumamoto-traffic')->everyThreeHours()->withoutOverlapping();
+Schedule::command('disaster-intelligence:sync-all')->everyThreeHours(10)->withoutOverlapping();
+Schedule::command('disaster-intelligence:verify-waste-sites --force')->twiceDaily(4, 16)->withoutOverlapping();

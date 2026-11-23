@@ -28,8 +28,9 @@
         </section>
 
         <section class="mt-4" aria-labelledby="terms-ai">
-          <h2 id="terms-ai" class="h5">4. AI入力補助</h2>
+          <h2 id="terms-ai" class="h5">4. AI入力補助と自動収集</h2>
           <p>AI入力補助を利用する場合、入力した情報共有会議用メモなどが、設定された外部AIサービスに送信されます。送信する権限のない情報、個人を特定できる情報、秘密情報を含めないでください。</p>
+          <p>本サービスは、公式サイト等で公開されている災害情報を自動収集し、外部AIサービスで整理する場合があります。取得に際しては、取得先の利用規約、robots.txt、アクセス間隔を尊重し、出典を表示します。自動収集データの取り扱いの詳細は<a href="{{ route('privacy') }}">プライバシーポリシー</a>をご確認ください。</p>
           <p>AIの提案には誤りが含まれる場合があります。利用者が内容を確認し、必要な修正を行ってから保存してください。</p>
         </section>
 
@@ -61,6 +62,7 @@
         </section>
 
         <nav class="mt-4" aria-label="利用規約ページからの移動">
+          <a href="{{ route('privacy') }}" class="btn btn-outline-secondary">プライバシーポリシー</a>
           @auth
             <a href="{{ route('home') }}" class="btn btn-outline-primary">ホームに戻る</a>
           @else

@@ -53,6 +53,9 @@ class SyncDisasterIntelligenceSources extends Command
                 return [
                     'type' => $source->type,
                     'url' => $source->url,
+                    'source_page_url' => is_array($source->metadata)
+                        ? ($source->metadata['source_page_url'] ?? null)
+                        : null,
                     'source_org' => $source->source_org,
                     'published_at' => $source->published_at?->toIso8601String(),
                     'credibility_rank' => $source->credibility_rank,
